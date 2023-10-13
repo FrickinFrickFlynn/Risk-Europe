@@ -1,0 +1,19 @@
+Army 
+Represents an army should be associated with a player
+
+Data:
+   units[4] - The array that stores unit counts
+   unitTotal - Total number of units
+
+Methods: 
+   Army(int foot, int archer, int cavalry, int siege)
+
+   int getTotal() - returns unitTotal
+   int getFoot() - returns footsoldier count (units[0])
+   int getArcher() - returns archer count (units[1])
+   int getCavalry() - returns cavalry count (units[2])
+   int getSiege() - returns siege unit count (units[3])
+
+   int totalValue() - returns total value of all units
+   void destroyUnits(int hits) - removes the lowest-value unit for each hit
+   String toString()

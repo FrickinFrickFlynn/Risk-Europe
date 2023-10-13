@@ -1,0 +1,89 @@
+public class Army {
+
+	//Stores unit types in the following order: foot, archer, cavalry, siege.
+	private int[] units = new int[4];
+
+	//The total amount of units regardless of type and value.
+	private int unitTotal;
+
+	public Army(int foot, int archer, int cavalry, int siege) {
+		units[0] = foot;
+		units[1] = archer;
+		units[2] = cavalry;
+		units[3] = siege;
+		unitTotal = foot + archer + cavalry + siege;
+	}
+
+	//Return total amount of units
+	public int getTotal() {
+		return unitTotal;
+	}
+
+	//Return total amount of footsoldiers
+	public int getFoot() {
+		return units[0];
+	}
+
+	//Return total amount of archers
+	public int getArcher() {
+		return units[1];
+	}
+
+	//Return total amount of cavalry
+	public int getCavalry() {
+		return units[2];
+	}
+
+	//Return total amount of siege weapons
+	public int getSiege() {
+		return units[3];
+	}
+
+	/* 
+	    Returns the total game value for the units in the army.
+	    Key: Foot:1 Archer:2 Cavalry:3 Siege:10
+	*/
+	public int totalValue() {
+		return units[0] + (units[1] * 2) + (units[2] * 3) + (units[3] * 10);
+	}
+
+	/*
+		Takes the number of units lost and removes them based on value.
+		Foot units are removed first followed by archers and so on.
+		If more units are destroyed than the total set all values to 0.
+	*/
+	public void destroyUnits(int hits) {
+		if (hits >= unitTotal) {
+			//Sets units to 0
+			for (int i = 0; i < 4; i++) {
+				units[i] = 0;
+			}
+
+			unitTotal = 0;
+		} else {
+			unitTotal -= hits;
+
+			//For each hit remove a unit in the order above
+			while (hits > 0) {
+				//Remove X unit if there are any
+				if (units[0] != 0) {
+					units[0]--;
+				} else if (units[1] != 0) {
+					units[1]--;
+				} else if (units[2] != 0) {
+					units[2]--;
+				} else {
+					units[3]--;
+				}
+				
+				hits--;
+			}
+		}
+	}
+
+	// Format: Footmen - #, Archer - #, Cavalry - #, Siege - #
+	public String toString() {
+		return "Footmen - " + units[0] + ", Archer - " + units[1] + 
+		", Cavalry - " + units[2] + ", Siege - " + units[3];
+	}
+}
