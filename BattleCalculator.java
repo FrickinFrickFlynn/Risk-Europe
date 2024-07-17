@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 public class BattleCalculator {
 	//Used to "roll dice"
-	private static Random rand = new Random();;
+	private static Random rand = new Random();
 
 	//Returns an array of dice roll results in descending order
 	private static int[] diceRoll(int rolls) {

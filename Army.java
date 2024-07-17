@@ -99,12 +99,12 @@ public class Army {
 		Expects legal numbers
 	*/
 	public Army split(int f, int a, int c, int s) {
-		Army other = new Army(f,a,c,d);
+		Army other = new Army(f,a,c,s);
 
 		units[0] -= f;
 		units[1] -= a;
 		units[2] -= c;
-		units[3] -= d;
+		units[3] -= s;
 
 		unitTotal -= other.getTotal();
 		return other;
