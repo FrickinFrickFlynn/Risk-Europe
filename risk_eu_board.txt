@@ -1,0 +1,85 @@
+49 34
+Scotland 1 0
+England 3 1 London
+Wales 1 0
+Ireland 2 1 Dublin
+Norway 1 0
+Sweden 3 1 Stockholm
+Finland 1 0
+Denmark 1 0
+Lithuania 1 0
+Estonia 1 0
+Republic_of_Novgorod 4 1 Novgorod
+Friesland 1 0
+Pomerania 1 0
+Prussia 1 0
+Polotsk 1 0
+Smolensk 1 0
+Rusland 2 1 Kiev
+Galicia 1 0
+Bulgaria 1 0
+Turkey 3 1 Constantinople
+Poland 2 1 Warsaw
+Hungary 3 1 Buda
+Highlands 1 0
+Serbia 1 0
+Greece 2 1 Athens
+Venice 1 0
+Saxony 4 1 Berlin
+Franconia 1 0
+Swabia 2 1 Zurich
+Bavaria 1 0
+Bohemia 1 0
+Lombardy 1 0
+Rome 4 1 Rome
+Kingdom_of_Sicily 1 0
+Sardinia 1 0
+Tunisia 1 0
+Lorraine 1 0
+Burgundy 1 0
+Algeria 3 1 Bejaia
+Normandy 1 0
+France 3 1 Paris
+Barcelona 1 0
+Brittany 1 0
+Navarre 1 0
+Valencia 1 0
+Leon_Castile 3 1 Madrid
+Portugal 1 0
+Granada 1 0
+Morocco 1 0
+CONNECTIONS
+Scotland Ireland England Norway
+Ireland Wales Brittany
+Wales England
+England Normandy Lorraine
+Brittany Normandy France Leon_Castile
+Normandy France
+France Lorraine Burgundy Navarre Barcelona
+Leon_Castile Portugal Granada Valencia Navarre Morocco
+Granada Valencia
+Valencia Navarre Barcelona Algeria
+Barcelona Navarre Burgundy
+Algeria Morocco Tunisia
+Lorraine Friesland Saxony Franconia Swabia Burgundy
+Swabia Franconia Bavaria Lombardy Burgundy
+Lombardy Burgundy Bavaria Rome
+Kingdom_of_Sicily Venice Rome
+Sardinia Rome Tunisia
+Saxony Friesland Denmark Bohemia Franconia
+Bohemia Denmark Franconia Bavaria Highlands Poland
+Bavaria Franconia Highlands Hungary Venice
+Hungary Venice Serbia Bulgaria Galicia Poland Highlands
+Poland Highlands Galicia Rusland Polotsk Prussia Pomerania Denmark
+Denmark Pomerania Norway Sweden Friesland
+Sweden Norway Finland
+Serbia Venice Bulgaria Greece
+Turkey Greece Bulgaria
+Greece Bulgaria Tunisia
+Galicia Bulgaria Rusland
+Republic_of_Novgorod Finland Estonia Smolensk
+Estonia Lithuania Smolensk Finland
+Prussia Pomerania Lithuania Polotsk
+Lithuania Pomerania Smolensk Polotsk
+Rusland Polotsk Smolensk
+Smolensk Polotsk

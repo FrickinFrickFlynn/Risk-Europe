@@ -81,6 +81,35 @@ public class Army {
 		}
 	}
 
+	/*
+		Joins with another Army
+		Other Army object is unchagned
+	*/
+	public void combine(Army other) {
+		units[0] += other.getFoot();
+		units[1] += other.getArcher();
+		units[2] += other.getCavalry();
+		units[3] += other.getSiege();
+
+		unitTotal += other.getTotal();
+	}
+
+	/*
+		Splits units from this Army into another Army
+		Expects legal numbers
+	*/
+	public Army split(int f, int a, int c, int s) {
+		Army other = new Army(f,a,c,d);
+
+		units[0] -= f;
+		units[1] -= a;
+		units[2] -= c;
+		units[3] -= d;
+
+		unitTotal -= other.getTotal();
+		return other;
+	}
+
 	// Format: Footmen - #, Archer - #, Cavalry - #, Siege - #
 	public String toString() {
 		return "Footmen - " + units[0] + ", Archer - " + units[1] + 
