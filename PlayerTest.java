@@ -20,7 +20,8 @@ public class PlayerTest {
 			System.out.print(unusedCards[i] + " ");
 		}
 
-		p1.pickCards(unusedCards[0], unusedCards[4]);
+		p1.pickCard(unusedCards[0]);
+		p1.pickCard(unusedCards[4]);
 		System.out.println(p1);
 
 		unusedCards = p1.getCards();
@@ -35,17 +36,20 @@ public class PlayerTest {
 		System.out.println(p1.useCard());
 		System.out.println(p1);
 
-		p1.pickCards(2,3);
+		p1.pickCard(2);
+		p1.pickCard(3);
 		p1.useCard();
 		p1.useCard();
 		System.out.println(p1);
 
-		p1.pickCards(4, 6);
+		p1.pickCard(4);
+		p1.pickCard(5);
 		p1.useCard();
 		p1.useCard();
 		System.out.println(p1);
 
-		p1.pickCards(7, 8);
+		p1.pickCard(7);
+		p1.pickCard(8);
 		p1.useCard();
 		System.out.println(p1);
 		p1.useCard();

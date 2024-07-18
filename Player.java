@@ -64,31 +64,50 @@ public class Player {
 	}
 
 	/*
-		Add two new active cards, removes them from drawPile
+		Add a new active card, removes it from drawPile
 		Card ids must be contained within drawPile
-		Any current active cards will be overwritten
+		Will not write unless there is a null cardId present
+		If this is the case it does not remove from draw
 	*/
-	public void pickCards(int id1, int id2) {
-		boolean found1 = false, found2 = false;
-
-		for (int i = 0; i < drawPile.length; i++) {
-			if (!found1 && drawPile[i] == id1) {
-				activeCards[0] = id1;
-				drawPile[i] = 0;
-				found1 = true;
-			} else if (!found2 && drawPile[i] == id2) {
-				activeCards[1] = id2;
-				drawPile[i] = 0;
-				found2 = true;
+	public void pickCard(int id) {
+		// Find the index of the card
+		int i;
+		for (i = 0; i < drawPile.length; i++) {
+			if (drawPile[i] == id) {
+				break;
 			}
 		}
+
+		// Check if no card was found
+		if (i == drawPile.length) return;
+
+		if (activeCards[0] != 0) {
+			if (activeCards[1] != 0) {
+				// There is no space present
+				return;
+			} else {
+				// Place in second space
+				activeCards[1] = id;
+			}
+		} else {
+			// Place in first space
+			activeCards[0] = id;
+		}
+
+		// Remove card from pile
+		drawPile[i] = 0;
 	}
 
 	/*
 		Returns the first card in activeCards
+		Returns the null card if 
+
 	*/
 	public int useCard() {
 		int card = activeCards[0];
+
+		// Return -1 if no card
+		if (card == 0) return 0;
 
 		// If there is a second card
 		if (activeCards[1] != 0) {
