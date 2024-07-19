@@ -57,7 +57,13 @@ public class Player {
 		Should be an even number
 	*/
 	public void giveCards(int[] cardIds) {
-		drawPile = cardIds;
+		drawPile = new int[cardIds.length];
+
+		// Copy arrays to prevent sharing references
+		for (int i = 0; i < cardIds.length; i++) {
+			drawPile[i] = cardIds[i];
+		}
+
 		discardPile = new int[drawPile.length];
 		activeCards = new int[2];
 		discardIndex = 0;
@@ -69,22 +75,18 @@ public class Player {
 		Will not write unless there is a null cardId present
 		If this is the case it does not remove from draw
 	*/
-	public void pickCard(int id) {
+	public int pickCard(int id) {
 		// Find the index of the card
 		int i;
-		for (i = 0; i < drawPile.length; i++) {
-			if (drawPile[i] == id) {
-				break;
-			}
-		}
+		for (i = 0; i < drawPile.length && drawPile[i] != id; i++);
 
 		// Check if no card was found
-		if (i == drawPile.length) return;
+		if (i == drawPile.length) return 1;
 
 		if (activeCards[0] != 0) {
 			if (activeCards[1] != 0) {
 				// There is no space present
-				return;
+				return 2;
 			} else {
 				// Place in second space
 				activeCards[1] = id;
@@ -96,6 +98,7 @@ public class Player {
 
 		// Remove card from pile
 		drawPile[i] = 0;
+		return 0;
 	}
 
 	/*
