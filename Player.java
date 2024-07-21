@@ -1,6 +1,6 @@
 /*
 	Represents a player
-	Holds important player stats (money, faction, crowns, activeUnits, cards)
+	Holds important player stats (money, faction, crowns, totalActiveUnits, cards)
 	Active units keeps track of what units the player has on the board
 		- Used to keep track of total and maintain unit limits
 
@@ -12,13 +12,16 @@
 		discard pile represents cards that have been played, active cards are the
 		cards that will be played each turn
 */
+import java.util.HashMap;
 
 public class Player {
 	private String name;
 	private String faction;
 	private int money;
 	private int crowns;
-	private int[] activeUnits; // [foot, arch, cav, siege]
+
+	private int[] totalActiveUnits; 				// [foot, arch, cav, siege]
+	private HashMap<Territory, Army> stationedUnits; 
 
 	private int[] drawPile;
 	private int[] discardPile;
@@ -33,7 +36,8 @@ public class Player {
 		this.faction = faction;
 		this.money = money;
 		this.crowns = crowns;
-		activeUnits = new int[4];
+		totalActiveUnits = new int[4];
+		stationedUnits = new HashMap<Territory, Army>();
 	}
 
 	public Player(String name, String faction) {
@@ -41,7 +45,8 @@ public class Player {
 		this.faction = faction;
 		money = 0;
 		crowns = 0;
-		activeUnits = new int[4];
+		totalActiveUnits = new int[4];
+		stationedUnits = new HashMap<Territory, Army>();
 	}
 
 	public Player() {
@@ -49,7 +54,8 @@ public class Player {
 		faction = "No Team";
 		money = 0;
 		crowns = 0;
-		activeUnits = new int[4];
+		totalActiveUnits = new int[4];
+		stationedUnits = new HashMap<Territory, Army>();
 	}
 
 	/*
@@ -177,11 +183,16 @@ public class Player {
 	/*
 		Allows for easy adjustment of unit counts
 	*/
-	public void addUnits(int foot, int arch, int cav, int siege) {
-		activeUnits[0] += foot;
-		activeUnits[1] += arch;
-		activeUnits[2] += cav;
-		activeUnits[3] += siege;
+	public void addTotalUnits(int foot, int arch, int cav, int siege) {
+		totalActiveUnits[0] += foot;
+		totalActiveUnits[1] += arch;
+		totalActiveUnits[2] += cav;
+		totalActiveUnits[3] += siege;
+	}
+
+	public void addUnit(Army unit, Territory terr) {
+		stationedUnits.put(terr, unit);
+		addTotalUnits(unit.getFoot(), unit.getArcher(), unit.getCavalry(), unit.getSiege());
 	}
 
 	/*
@@ -203,20 +214,20 @@ public class Player {
 		return crowns;
 	}
 
-	public int getFoot() {
-		return activeUnits[0];
+	public int getTotalFoot() {
+		return totalActiveUnits[0];
 	} 
 
-	public int getArch() {
-		return activeUnits[1];
+	public int getTotalArch() {
+		return totalActiveUnits[1];
 	}
 
-	public int getCav() {
-		return activeUnits[2];
+	public int getTotalCav() {
+		return totalActiveUnits[2];
 	}
 
-	public int getSiege() {
-		return activeUnits[3];
+	public int getTotalSiege() {
+		return totalActiveUnits[3];
 	}
 
 	/*
@@ -239,19 +250,19 @@ public class Player {
 	}
 
 	public void setFoot(int foot) {
-		activeUnits[0] = foot;
+		totalActiveUnits[0] = foot;
 	}
 
 	public void setArch(int arch) {
-		activeUnits[1] = arch;
+		totalActiveUnits[1] = arch;
 	}
 
 	public void setCav(int cav) {
-		activeUnits[2] = cav;
+		totalActiveUnits[2] = cav;
 	}
 
 	public void setSiege(int siege) {
-		activeUnits[3] = siege;
+		totalActiveUnits[3] = siege;
 	}
 
 	/*
@@ -260,8 +271,8 @@ public class Player {
 	public String toString() {
 		String out = "Player: " + name + "\n";
 		out += faction + " $" + money + " Cr: " + crowns + "\n";
-		out += "Units: \n" + "Foot - " + activeUnits[0] + "\nArch - " + activeUnits[1]; 
-		out += "\nCav - " + activeUnits[2] + "\nSiege - " + activeUnits[3] + "\n";
+		out += "Units: \n" + "Foot - " + totalActiveUnits[0] + "\nArch - " + totalActiveUnits[1]; 
+		out += "\nCav - " + totalActiveUnits[2] + "\nSiege - " + totalActiveUnits[3] + "\n";
 
 		if (drawPile != null) {
 			out += "\nDraw Pile: ";

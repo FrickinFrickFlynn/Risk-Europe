@@ -7,7 +7,7 @@
 
 	Board file format:
 	#_of_territories #_of_connection_lines
-	Name1 Value1 Crown(1or0) Name2(if needed)
+	Name1 Value1 Crown(1or0) Name2(if needed) StartSpace(1or0 if needed)
 	...
 	CONNECTIONS
 	Name1 Name2 Name3
@@ -43,16 +43,20 @@ public class Board {
 	}
 
 	/*
-		Retrieve territory object reference by string name
+		Retrieve territory object reference by name or crown name
 	*/
 	public Territory getTerritory(String name) {
 		for (int i = 0; i < spaces.length; i++) {
-			if (spaces[i].getName().equals(name)) {
+			if (spaces[i].getName().equals(name) || (spaces[i].hasCrown() && spaces[i].getCrownName().equals(name))) {
 				return spaces[i];
 			}
 		}
 
 		return null;
+	}
+
+	public Territory[] getTerritories() {
+		return spaces;
 	}
 
 	/*
@@ -66,7 +70,7 @@ public class Board {
 
 			// Create vars and extract the counts from the first line
 			String line = reader.readLine();
-			String[] tokens = parseLine(line, 100);
+			String[] tokens = parseLine(line, 2);
 			int territoryCount = Integer.parseInt(tokens[0]);
 			int connectionCount = Integer.parseInt(tokens[1]);
 
@@ -93,11 +97,18 @@ public class Board {
 
 				if (!readingConnections) {
 					// Reading a territory
-					tokens = parseLine(line, 4);
+					tokens = parseLine(line, 5);
 
 					// Converts the strings and creates a new territory object with them
-					spaces[count++] = new Territory(tokens[0], Integer.parseInt(tokens[1]), (tokens[2].equals("1")) ? true : false, 
-						(tokens[2].equals("1") ? tokens[3] : null));
+					Territory temp = new Territory(tokens[0], Integer.parseInt(tokens[1]));
+
+					if (tokens[2].equals("1")) {
+						temp.setCrown(true);
+						temp.setCrownName(tokens[3]);
+						temp.setCanStart(tokens[4].equals("1") ? true : false);
+					}
+
+					spaces[count++] = temp;
 				} else {
 					// Reading a connection
 					tokens = parseLine(line, 10);

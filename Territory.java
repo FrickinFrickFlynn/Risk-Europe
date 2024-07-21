@@ -16,12 +16,13 @@ public class Territory {
 	private Army unit;
 	private boolean crown;
 	private String crownName;
+	private boolean canStart;
 	private boolean castle;
 
 	/*
 		Constructors for all fields, intensive qualities, and bare minimum
 	*/
-	public Territory(String name, int value, Territory[] connections, Army unit, Army attackers, boolean crown, String crownName, boolean castle) {
+	public Territory(String name, int value, Territory[] connections, Army unit, Army attackers, boolean crown, String crownName, boolean canStart, boolean castle) {
 		this.name = name;
 		this.value = value;
 		this.connections = connections;
@@ -29,14 +30,28 @@ public class Territory {
 		this.attackers = attackers;
 		this.crown = crown;
 		this.crownName = crownName;
+		this.canStart = canStart;
 		this.castle = castle;
 	}
 
-	public Territory(String name, int value, boolean crown, String crownName) {
+	public Territory(String name, int value, boolean crown, String crownName, boolean canStart) {
 		this.name = name;
 		this.value = value;
 		this.crown = crown;
 		this.crownName = crownName;
+		this.canStart = canStart;
+		connections = new Territory[0];
+		unit = null;
+		attackers = null;
+		castle = false;
+	}
+
+	public Territory(String name, int value) {
+		this.name = name;
+		this.value = value;
+		crown = false;
+		crownName = "";
+		canStart = false;
 		connections = new Territory[0];
 		unit = null;
 		attackers = null;
@@ -50,7 +65,9 @@ public class Territory {
 		unit = null;
 		attackers = null;
 		crown = false;
+		crownName = "";
 		castle = false;
+		canStart = false;
 	}
 
 	/*
@@ -134,6 +151,10 @@ public class Territory {
 		this.crownName = crownName;
 	}
 
+	public void setCanStart(boolean canStart) {
+		this.canStart = canStart;
+	}
+
 	/*
 		Getters
 	*/
@@ -161,6 +182,10 @@ public class Territory {
 		return value;
 	}
 
+	public boolean canStart() {
+		return canStart;
+	}
+
 	public Territory[] getConnections() {
 		return connections;
 	}
@@ -173,7 +198,8 @@ public class Territory {
 		To string method
 	*/
 	public String toString() {
-		String str = "[" + name + ", " + value + "]\nCrown: " + crown + "\nCrown Name: " + ((crownName == null) ? "None" : crownName) + "\nCastle: " + castle + "\nUnit: " + unit + "\nAttackers: " + attackers + "\nConnections:\n";
+		String str = "[" + name + ", " + value + "]\nCrown: " + crown + "\nCrown Name: " + ((crownName == null) ? "None" : crownName) 
+		+ "\nCanStart: " + canStart + "\nCastle: " + castle + "\nUnit: " + unit + "\nAttackers: " + attackers + "\nConnections:\n";
 		
 		for (int i = 0; i < connections.length; i++) {
 			str += connections[i].getName() + "\n";

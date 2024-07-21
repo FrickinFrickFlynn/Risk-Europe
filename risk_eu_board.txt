@@ -1,50 +1,50 @@
 49 34
 Scotland 1 0
-England 3 1 London
+England 3 1 London 1
 Wales 1 0
-Ireland 2 1 Dublin
+Ireland 2 1 Dublin 0
 Norway 1 0
-Sweden 3 1 Stockholm
+Sweden 3 1 Stockholm 1
 Finland 1 0
 Denmark 1 0
 Lithuania 1 0
 Estonia 1 0
-Republic_of_Novgorod 4 1 Novgorod
+Republic_of_Novgorod 4 1 Novgorod 0
 Friesland 1 0
 Pomerania 1 0
 Prussia 1 0
 Polotsk 1 0
 Smolensk 1 0
-Rusland 2 1 Kiev
+Rusland 2 1 Kiev 1
 Galicia 1 0
 Bulgaria 1 0
-Turkey 3 1 Constantinople
-Poland 2 1 Warsaw
-Hungary 3 1 Buda
+Turkey 3 1 Constantinople 1
+Poland 2 1 Warsaw 0
+Hungary 3 1 Buda 0
 Highlands 1 0
 Serbia 1 0
-Greece 2 1 Athens
+Greece 2 1 Athens 0
 Venice 1 0
-Saxony 4 1 Berlin
+Saxony 4 1 Berlin 1
 Franconia 1 0
-Swabia 2 1 Zurich
+Swabia 2 1 Zurich 0
 Bavaria 1 0
 Bohemia 1 0
 Lombardy 1 0
-Rome 4 1 Rome
+Rome 4 1 Rome 1
 Kingdom_of_Sicily 1 0
 Sardinia 1 0
 Tunisia 1 0
 Lorraine 1 0
 Burgundy 1 0
-Algeria 3 1 Bejaia
+Algeria 3 1 Bejaia 0
 Normandy 1 0
-France 3 1 Paris
+France 3 1 Paris 1
 Barcelona 1 0
 Brittany 1 0
 Navarre 1 0
 Valencia 1 0
-Leon_Castile 3 1 Madrid
+Leon_Castile 3 1 Madrid 1
 Portugal 1 0
 Granada 1 0
 Morocco 1 0

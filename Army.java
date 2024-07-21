@@ -112,7 +112,7 @@ public class Army {
 
 	// Format: Footmen - #, Archer - #, Cavalry - #, Siege - #
 	public String toString() {
-		return "Footmen - " + units[0] + ", Archer - " + units[1] + 
-		", Cavalry - " + units[2] + ", Siege - " + units[3];
+		return "Footmen: " + units[0] + "| Archers: " + units[1] + 
+		"| Cavalry: " + units[2] + "| Siege: " + units[3];
 	}
 }

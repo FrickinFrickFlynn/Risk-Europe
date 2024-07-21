@@ -49,6 +49,8 @@ public class Game {
 
 	private int startAmt;					// Starting amount of money
 	private int[] maxUnits;					// Max units a player is allowed
+	private int turnsPerRound;				// Number of turns per round
+	private int[] stArmyCnt;				// Starting unit count
 
 	public Game(String[] playerNames, String boardPath, int[] cards) {
 		sc = new Scanner(System.in);
@@ -56,13 +58,20 @@ public class Game {
 		brd = new Board(boardPath);
 		cardPool = cards;
 		
-		// Game vars
+		/* 
+			Game vars. Magic numbers are everywhere here. Ignore them as I intend
+			on implementing a way to handle custom game var values. 
+		*/
 		startAmt = 5;
+		turnsPerRound = 2;
 		maxUnits = new int[4];
 		maxUnits[0] = 25;
 		maxUnits[1] = 12;
 		maxUnits[2] = 12;
 		maxUnits[3] = 4;
+
+		stArmyCnt = new int[4];
+		stArmyCnt[0] = 10; 		// The rest are zero
 
 		// Create new player objects from their name, give them starting equipment
 		players = new Player[playerNames.length];
@@ -84,6 +93,8 @@ public class Game {
 
 		// Bidding sequence
 		bid();
+		assignOrder();
+		chooseStartingLocation();
 
 		// Main game loop
 		while (!gameOver) {
@@ -94,12 +105,17 @@ public class Game {
 			pickingSequence();
 
 			// Turn1 & 2
+			for (int i = 0; i < turnsPerRound; i++) {
+				for (int j = 0; j < players.length; j++) {
+					//takeTurn(players[j]);
+					System.out.println("Turn: " + (i+1) + " Player: " + (j+1));
+				}
+			}
 
 			// Resolve disputes
 
 			// Check for win
 			gameOver = true;
-
 		}
 	}
 
@@ -156,6 +172,9 @@ public class Game {
 		// The winner has been determined
 		players[largest].addMoney(-bids[largest]);
 		firstPlayer = players[largest];
+
+		System.out.println(firstPlayer.getName() + " is the winner of the bid!");
+		getConfirmation();
 	}
 
 	/*
@@ -194,6 +213,7 @@ public class Game {
 			Player curr = players[i];
 			int[] currCards = curr.getCards();
 
+			clearScreen();
 			System.out.println(curr.getName() + "'s turn to pick");
 			getConfirmation();
 			clearScreen();
@@ -227,8 +247,157 @@ public class Game {
 	}
 
 	/*
-		Returns the name of cards from id
+		Takes a turn for the given player.
+		Turns involve choosing an action from the activecard and then playing it
+	
+	private void takeTurn(Player p) {
+		int card = p.useCard();
+
+		clearScreen();
+		System.out.println(p.getName() + "'s Turn");
+		getConfirmation();
+		clearScreen();
+
+		System.out.println(getCardName(card));
+		System.out.println("Choose an action (1 or 2): ");
+
+		int action = getIntInput(1,2);
+		interpretCard(card, action, p);
+	}
 	*/
+
+	// Sets up player starting positions for each player
+	private void chooseStartingLocation() {
+		for (int i = 0; i < players.length; i++) {
+			Player p = players[i];
+			Territory[] terrs = brd.getTerritories(); 
+
+			clearScreen();
+			System.out.println(p.getName() + "'s turn to choose a starting location");
+			getConfirmation();
+			clearScreen();
+
+			// Display possible starting locations, cities
+			System.out.println("Starting Locations: ");
+			for (int j = 0; j < terrs.length; j++) {
+				if (terrs[j].canStart() && terrs[j].getUnit() == null) {
+					System.out.println(terrs[j].getCrownName());
+				}
+			}
+
+			// Get input
+			System.out.print("\nPlease type the name of your starting location: ");
+			String choice = getStringInput();
+			Territory chosenTerritory = brd.getTerritory(choice);
+
+			while (chosenTerritory == null) {
+				System.out.print("Invalid name, try again: ");
+				choice = getStringInput();
+				chosenTerritory = brd.getTerritory(choice);
+			}
+
+			clearScreen();
+
+			// Pick adjacent space
+			System.out.println("\nAdjacent Territories: ");
+			Territory[] adj = chosenTerritory.getConnections();
+			for (int j = 0; j < adj.length; j++) {
+				System.out.println(adj[j].getName());
+			}
+
+			System.out.println("\nYou must divide your starting units between your capital and one adjacent non-city space.");
+			System.out.print("Please type the name of the adjacent space: ");
+
+			choice = getStringInput();
+			Territory chosenAdjacent = brd.getTerritory(choice);
+
+			while (chosenAdjacent == null) {
+				System.out.print("Invalid name, try again: ");
+				choice = getStringInput();
+				chosenAdjacent = brd.getTerritory(choice);
+			}
+
+			// Get unit distribution
+			int ft, ar, cv, sg;
+			while (true) {
+				clearScreen();
+
+				// Display starting army
+				System.out.println("\nStarting Units: ");
+				System.out.println("Footmen: " + stArmyCnt[0] + " | Archers: " + stArmyCnt[1] + " | Cavalry: " + stArmyCnt[2] + " | Siege: " + stArmyCnt[3]);
+				System.out.println("\nType the number of units to place on your capital: ");
+
+				ft = ar = cv = sg = 0;
+				
+				if (stArmyCnt[0] != 0) {
+					System.out.print("Footmen: ");
+					ft = getIntInput(0, stArmyCnt[0]);
+				}
+				
+				if (stArmyCnt[1] != 0) {
+					System.out.print("Archers: ");
+					ar = getIntInput(0, stArmyCnt[1]);
+				}
+
+				if (stArmyCnt[2] != 0) {
+					System.out.print("Cavalry: ");
+					cv = getIntInput(0, stArmyCnt[2]);
+				}
+
+				if (stArmyCnt[3] != 0) {
+					System.out.print("Siege: ");
+					sg = getIntInput(0, stArmyCnt[3]);
+				}
+
+				// Checks to see if no units were chosen or if they all were
+				int total = ft + ar + cv + sg;
+				int maxTotal = stArmyCnt[0] + stArmyCnt[1] + stArmyCnt[2] + stArmyCnt[3];
+
+				if (total == 0) {
+					System.out.println("\nAt least one unit must remain, try again.");
+					getConfirmation();
+					clearScreen();
+					continue;
+				} else if (total == maxTotal) {
+					System.out.println("\nAt least one unit must go onto the other territory, try again.");
+					getConfirmation();
+					clearScreen();
+					continue;
+				}
+
+				clearScreen();
+
+				// Checks if the player is satisfied
+				System.out.println("Units going to " + chosenTerritory.getCrownName() + ": ");
+				System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
+
+				System.out.print("\nConfirm unit placement (1 or 0): ");
+
+				if (getIntInput(0,1) == 1) {
+					break;
+				}
+			}
+
+			// Create capital and adjacent units
+			Army capitalUnit = new Army(ft, ar, cv, sg);
+			Army adjacentUnit = new Army(stArmyCnt[0]-ft, stArmyCnt[1]-ar, stArmyCnt[2]-cv, stArmyCnt[3]-sg);
+
+			// Modify territories
+			chosenTerritory.setUnit(capitalUnit);
+			chosenTerritory.setCastle(true);
+			chosenAdjacent.setUnit(adjacentUnit);
+
+			// Modify player
+			p.addCrowns(1);
+			p.addUnit(capitalUnit, chosenTerritory);
+			p.addUnit(adjacentUnit, chosenAdjacent);
+
+			System.out.println("\nUnits were placed!");
+			getConfirmation();
+		}
+	}
+
+	// Returns the name of the card
 	private String getCardName(int id) {
 		String c;
 
@@ -259,9 +428,37 @@ public class Game {
 		return c;
 	}
 
-	/*
-		A brutish way to clear the output terminal
-	*/
+	// Interprets the card id to perform an action
+	/*private void interpretCard(int id, int action, Player p) {
+		switch (id) {
+			case 0:					// Null card id case
+				System.out.println("Something really went wrong");
+				break;
+			case 1:					// Tax Spend
+				(action == 1) ? tax(p) : spend(p);
+				break;
+			case 2:					// Tax Spend (King Me)
+				(action == 1) ? tax(p) : spend(p);
+				firstPlayer = p;
+				break;
+			case 3:					// Expand Maneuver (Fortify)
+				(action == 1) ? expand(p) : maneuver(p);
+				fortify(p);
+				break;
+			case 4:					// Expand Maneuver (Siege Assault)
+				(action == 1) ? expand(p) : maneuver(p);
+				siegeAssault(p);
+				break;
+			case 5:					// SplitExpand Maneuver
+				(action == 1) ? splitExpand(p) : maneuver(p);
+				break;
+			default:				// Default case
+				System.out.println("Invalid card id");
+				break;
+		}
+	}*/
+
+	// Clear output
 	private void clearScreen() {
 		for (int i = 0; i < 75; i++) {
 			System.out.println();
@@ -299,17 +496,28 @@ public class Game {
 		return input;
 	}
 
-	/*
-		Pauses execution until confirmation via enter
-	*/
+	// Gets input of String type, trims leading chars
+	private String getStringInput() {
+		String input = sc.nextLine();
+
+		// Skips whitespace, stops on the first non-whitespace char
+		int i = 0;
+		while (i < input.length() && input.charAt(i) == ' ') i++;
+
+		// Skips non-whitespace, stops on the first whitespace
+		int j = i;
+		while (j < input.length() && input.charAt(j) != ' ') j++;
+
+		return input.substring(i, j);
+	}
+
+	// Pause execution
 	private void getConfirmation() {
 		System.out.print("Press ENTER to continue...");
 		sc.nextLine();
 	}
 
-	/*
-		To-String Method (DEBUG)
-	*/
+	// For debug
 	public String toString() {
 		String out = "";
 		out += brd.toString() + "\n\n";
@@ -323,4 +531,34 @@ public class Game {
 
 		return out;
 	}
+
+	/*
+	private void tax(Player p) {
+		
+	}
+
+	private void expand(Player p) {
+
+	}
+
+	private void maneuver(Player p) {
+
+	}
+
+	private void spend(Player p) {
+
+	}
+
+	private void splitExpand(Player p) {
+
+	}
+
+	private void fortify(Player p) {
+		
+	}
+
+	private void siegeAssault(Player p) {
+		
+	}
+	*/
 }
