@@ -47,7 +47,7 @@ public class Board {
 	*/
 	public Territory getTerritory(String name) {
 		for (int i = 0; i < spaces.length; i++) {
-			if (spaces[i].getName().equals(name) || (spaces[i].hasCrown() && spaces[i].getCrownName().equals(name))) {
+			if (spaces[i].getName().equalsIgnoreCase(name) || (spaces[i].hasCrown() && spaces[i].getCrownName().equalsIgnoreCase(name))) {
 				return spaces[i];
 			}
 		}

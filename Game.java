@@ -11,6 +11,7 @@
 		- Choose rules? Implement later
 		- Give starting supplies
 		- Bet for first
+		- Pick starting location
 
 	Start of Round:
 		- Assign player order, shift until fpt possessor
@@ -290,7 +291,8 @@ public class Game {
 			String choice = getStringInput();
 			Territory chosenTerritory = brd.getTerritory(choice);
 
-			while (chosenTerritory == null) {
+			// Check for bad input, either a nonexistent territory or a non-start territory
+			while (chosenTerritory == null || !chosenTerritory.canStart() || chosenTerritory.getUnit() != null) {
 				System.out.print("Invalid name, try again: ");
 				choice = getStringInput();
 				chosenTerritory = brd.getTerritory(choice);
@@ -311,24 +313,29 @@ public class Game {
 			choice = getStringInput();
 			Territory chosenAdjacent = brd.getTerritory(choice);
 
-			while (chosenAdjacent == null) {
+			// Check for bad input, nonexistent space, unit on space, and non-adjacent space.
+			while (chosenAdjacent == null || !chosenAdjacent.isAdjacent(chosenTerritory) || chosenAdjacent.getUnit() != null) {
 				System.out.print("Invalid name, try again: ");
 				choice = getStringInput();
 				chosenAdjacent = brd.getTerritory(choice);
 			}
 
-			// Get unit distribution
+			/* 
+				Get unit distribution
+				continue and break are used to control this loop
+			*/
 			int ft, ar, cv, sg;
 			while (true) {
 				clearScreen();
 
 				// Display starting army
 				System.out.println("\nStarting Units: ");
-				System.out.println("Footmen: " + stArmyCnt[0] + " | Archers: " + stArmyCnt[1] + " | Cavalry: " + stArmyCnt[2] + " | Siege: " + stArmyCnt[3]);
+				System.out.println("Footmen: " + stArmyCnt[0] + " | Archers: " + stArmyCnt[1] + " | Cavalry: " 
+					+ stArmyCnt[2] + " | Siege: " + stArmyCnt[3]);
 				System.out.println("\nType the number of units to place on your capital: ");
 
+				// Get input from player
 				ft = ar = cv = sg = 0;
-				
 				if (stArmyCnt[0] != 0) {
 					System.out.print("Footmen: ");
 					ft = getIntInput(0, stArmyCnt[0]);
@@ -370,6 +377,10 @@ public class Game {
 				// Checks if the player is satisfied
 				System.out.println("Units going to " + chosenTerritory.getCrownName() + ": ");
 				System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
+
+				System.out.println("\nUnits going to " + chosenAdjacent.getName() + ": ");
+				System.out.println("Footmen: " + (stArmyCnt[0]-ft) + " | Archers: " + (stArmyCnt[1]-ar) + " | Cavalry: " 
+					+ (stArmyCnt[2]-cv) + " | Siege: " + (stArmyCnt[3]-sg));
 
 				System.out.print("\nConfirm unit placement (1 or 0): ");
 
@@ -508,6 +519,7 @@ public class Game {
 		int j = i;
 		while (j < input.length() && input.charAt(j) != ' ') j++;
 
+		// Trim input
 		return input.substring(i, j);
 	}
 
