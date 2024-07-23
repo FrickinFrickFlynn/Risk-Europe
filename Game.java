@@ -108,8 +108,7 @@ public class Game {
 			// Turn1 & 2
 			for (int i = 0; i < turnsPerRound; i++) {
 				for (int j = 0; j < players.length; j++) {
-					//takeTurn(players[j]);
-					System.out.println("Turn: " + (i+1) + " Player: " + (j+1));
+					takeTurn(players[j]);
 				}
 			}
 
@@ -250,6 +249,7 @@ public class Game {
 	/*
 		Takes a turn for the given player.
 		Turns involve choosing an action from the activecard and then playing it
+	*/
 	
 	private void takeTurn(Player p) {
 		int card = p.useCard();
@@ -265,7 +265,6 @@ public class Game {
 		int action = getIntInput(1,2);
 		interpretCard(card, action, p);
 	}
-	*/
 
 	// Sets up player starting positions for each player
 	private void chooseStartingLocation() {
@@ -400,6 +399,7 @@ public class Game {
 
 			// Modify player
 			p.addCrowns(1);
+			p.addMoney(chosenTerritory.getValue());
 			p.addUnit(capitalUnit, chosenTerritory);
 			p.addUnit(adjacentUnit, chosenAdjacent);
 
@@ -440,34 +440,39 @@ public class Game {
 	}
 
 	// Interprets the card id to perform an action
-	/*private void interpretCard(int id, int action, Player p) {
+	private void interpretCard(int id, int action, Player p) {
 		switch (id) {
 			case 0:					// Null card id case
 				System.out.println("Something really went wrong");
 				break;
 			case 1:					// Tax Spend
-				(action == 1) ? tax(p) : spend(p);
+				if (action == 1) tax(p); 
+				else spend(p);
 				break;
 			case 2:					// Tax Spend (King Me)
-				(action == 1) ? tax(p) : spend(p);
+				if (action == 1) tax(p); 
+				else spend(p);
 				firstPlayer = p;
 				break;
 			case 3:					// Expand Maneuver (Fortify)
-				(action == 1) ? expand(p) : maneuver(p);
+				if (action == 1) expand(p); 
+				else maneuver(p);
 				fortify(p);
 				break;
 			case 4:					// Expand Maneuver (Siege Assault)
-				(action == 1) ? expand(p) : maneuver(p);
+				if (action == 1) expand(p); 
+				else maneuver(p);
 				siegeAssault(p);
 				break;
 			case 5:					// SplitExpand Maneuver
-				(action == 1) ? splitExpand(p) : maneuver(p);
+				if (action == 1) splitExpand(p); 
+				else maneuver(p);
 				break;
 			default:				// Default case
 				System.out.println("Invalid card id");
 				break;
 		}
-	}*/
+	}
 
 	// Clear output
 	private void clearScreen() {
@@ -545,8 +550,42 @@ public class Game {
 	}
 
 	/*
+		Algorithm for finding total value of a supply chain
+		Add value of space to total,
+			repeat for each non-disputed, owned adjacent territory (unless counted)
+	*/
+
+	// Finds highest tax value supply chain owned by p, adds it to their money
 	private void tax(Player p) {
+		clearScreen();
+
+		// Get territories that have p's units stationed
+		Territory[] terrs = p.getTerritories();
+
+		// For each city compare its supply chain value to the largest
+		int largest = 0;
+
+		for (int i = 0; i < terrs.length; i++) {
+			if (terrs[i].hasCrown()) {
+				Territory[] supplyChain = p.getSupplyChain(terrs[i]);
+				int totalValue = 0;
+
+				for (int j = 0; j < supplyChain.length; j++) {
+					totalValue += supplyChain[j].getValue();
+				}
+
+				if (totalValue > largest) {
+					largest = totalValue;
+				}
+			}
+		}
 		
+		// Add the largest value to the player's money
+		p.addMoney(largest);
+		
+		System.out.println("Taxing the largest supply chain yields " + largest + " coins");
+		System.out.println("May your empire prosper");
+		getConfirmation();
 	}
 
 	private void expand(Player p) {
@@ -572,5 +611,4 @@ public class Game {
 	private void siegeAssault(Player p) {
 		
 	}
-	*/
 }

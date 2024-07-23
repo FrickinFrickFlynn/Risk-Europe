@@ -13,6 +13,7 @@
 		cards that will be played each turn
 */
 import java.util.HashMap;
+import java.util.ArrayList;
 
 public class Player {
 	private String name;
@@ -190,14 +191,56 @@ public class Player {
 		totalActiveUnits[3] += siege;
 	}
 
+	// Adds a new unit to the player
 	public void addUnit(Army unit, Territory terr) {
 		stationedUnits.put(terr, unit);
 		addTotalUnits(unit.getFoot(), unit.getArcher(), unit.getCavalry(), unit.getSiege());
 	}
 
+	// Returns an array of the supply chain starting from a territory
+	public Territory[] getSupplyChain(Territory start) {
+		Territory[] occupied = getTerritories();
+		ArrayList<Territory> chain = new ArrayList<Territory>();
+
+		// Check if the starting territory is owned
+		boolean isOwned = false;
+		for (int i = 0; i < occupied.length; i++) {
+			if (start.equals(occupied[i])) {
+				isOwned = true;
+				break;
+			}
+		}
+
+		// Also check if it is disputed
+		if (!isOwned || start.isDisputed()) return null;
+
+		chainRecursion(start, chain, occupied);
+
+		return chain.toArray(new Territory[chain.size()]);
+	}
+
+	// Used by getSupplyChain to generate a list of territories connected to the chain
+	// Expects that terr is owned and not disputed
+	private void chainRecursion(Territory terr, ArrayList<Territory> chain, Territory[] owned) {
+		// Add to chain list
+		chain.add(terr);
+
+		// Repeat this with owned adjacent territories that are not disputed
+		for (int i = 0; i < owned.length; i++) {
+			if (terr.isAdjacent(owned[i]) && !owned[i].isDisputed() && !chain.contains(owned[i])) {
+				chainRecursion(owned[i], chain, owned);
+			}
+		}
+	}
+
 	/*
 		Getters
 	*/
+	public Territory[] getTerritories() {
+		// Gets the territories from the hashmap as a set
+		return stationedUnits.keySet().toArray(new Territory[1]);
+	}
+
 	public String getName() {
 		return name;
 	}
