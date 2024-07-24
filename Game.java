@@ -402,6 +402,7 @@ public class Game {
 			p.addMoney(chosenTerritory.getValue());
 			p.addUnit(capitalUnit, chosenTerritory);
 			p.addUnit(adjacentUnit, chosenAdjacent);
+			p.addTotalUnits(stArmyCnt[0], stArmyCnt[1], stArmyCnt[2], stArmyCnt[3]);
 
 			System.out.println("\nUnits were placed!");
 			getConfirmation();
@@ -549,12 +550,6 @@ public class Game {
 		return out;
 	}
 
-	/*
-		Algorithm for finding total value of a supply chain
-		Add value of space to total,
-			repeat for each non-disputed, owned adjacent territory (unless counted)
-	*/
-
 	// Finds highest tax value supply chain owned by p, adds it to their money
 	private void tax(Player p) {
 		clearScreen();
@@ -582,14 +577,216 @@ public class Game {
 		
 		// Add the largest value to the player's money
 		p.addMoney(largest);
-		
+		System.out.println("Tax:\n");
 		System.out.println("Taxing the largest supply chain yields " + largest + " coins");
 		System.out.println("May your empire prosper");
 		getConfirmation();
 	}
 
+	// Move units into undisputed territory (unowned)
+	// Must keep one, or the same as the attackers if moving from disputed
 	private void expand(Player p) {
+		Territory[] owned = p.getTerritories();
+		Territory[] fromAdj;
+		Territory from = null, to = null;
+		Army fromUnit;
+		String input;
+		boolean isFinal = false;
+		int ft, ar, cv, sg;
+		
+		// Repeat until the user finalizes their decision
+		while (!isFinal) {
+			clearScreen();
+			System.out.println("Expand:");
 
+			// Display owned territories
+			System.out.println("\nYour Territories: ");
+			for (int i = 0; i < owned.length; i++) {
+				if (owned[i].hasCrown()) {
+					System.out.println(owned[i].getCrownName());
+				} else {
+					System.out.println(owned[i].getName());
+				}
+			}
+
+			// Get input from the player
+			System.out.print("\nInput a territory you own to see where you can expand into: ");
+		
+			while (true) {
+				input = getStringInput();
+				from = brd.getTerritory(input);
+
+				if (from == null) {
+					System.out.print("Territory does not exist: ");
+				} else if (!p.isOwned(from)) {
+					System.out.print("You do not own that: ");
+				} else {
+					break;
+				}
+			}
+
+			// Determine valid expand destinations
+			fromAdj = from.getConnections();
+			for (int i = 0; i < fromAdj.length; i++) {
+				// Check if there is a castle and no seige weapon
+				if (fromAdj[i].hasCastle() && from.getUnit().getSiege() == 0) {
+					fromAdj[i] = null;
+				} else if (fromAdj[i].isDisputed() || p.isOwned(fromAdj[i])) {
+					fromAdj[i] = null;
+				}
+			}
+
+			// Display them and query the player
+			System.out.println("\nDestinations: ");
+
+			for (int i = 0; i < fromAdj.length; i++) {
+				if (fromAdj[i] != null) {
+					if (fromAdj[i].hasCrown()) {
+						System.out.println(fromAdj[i].getCrownName());
+					} else {
+						System.out.println(fromAdj[i].getName());
+					}
+				}
+			}
+
+			System.out.print("\nChoose a destination or type 'retry' to start over: ");
+
+			boolean val = false;
+			while (!val) {
+				input = getStringInput();
+
+				// Checks for retry
+				if (input.equalsIgnoreCase("retry")) {
+					// Exits loop prematurely preventing isFinal from being set
+					break;
+				}
+
+				to = brd.getTerritory(input);
+
+				// Checks if the chosen territory is valid
+				for (int i = 0; i < fromAdj.length; i++) {
+					if (fromAdj[i] != null && fromAdj[i].equals(to)) {
+						val = true;
+					}
+				}
+
+				if (to == null) {
+					System.out.print("Territory does not exist: ");
+				} else if (!val) {
+					System.out.print("Invalid: ");
+				} else {
+					// Runs right before exiting loop
+					isFinal = true;
+				}
+			}
+		}
+
+		// Get the number of units to move
+		fromUnit = from.getUnit();
+
+		while (true) {
+			clearScreen();
+
+			// Display the army that will split
+			System.out.println("\nUnits stationed in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
+			System.out.println("Footmen: " + fromUnit.getFoot() + " | Archers: " + fromUnit.getArcher() + " | Cavalry: " 
+				+ fromUnit.getCavalry() + " | Siege: " + fromUnit.getSiege());
+			System.out.println("\nType the number of units that will expand into " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": ");
+
+			// Get input from player
+			ft = ar = cv = sg = 0;
+			if (fromUnit.getFoot() != 0) {
+				System.out.print("Footmen: ");
+				ft = getIntInput(0, fromUnit.getFoot());
+			}
+			
+			if (fromUnit.getArcher() != 0) {
+				System.out.print("Archers: ");
+				ar = getIntInput(0, fromUnit.getArcher());
+			}
+
+			if (fromUnit.getCavalry() != 0) {
+				System.out.print("Cavalry: ");
+				cv = getIntInput(0, fromUnit.getCavalry());
+			}
+
+			if (fromUnit.getSiege() != 0) {
+				System.out.print("Siege: ");
+				sg = getIntInput(0, fromUnit.getSiege());
+			}
+
+			// Checks for errors
+			int totalOut = ft + ar + cv + sg;
+			int remaning = (fromUnit.getFoot() + fromUnit.getArcher() + fromUnit.getCavalry() + fromUnit.getSiege()) - totalOut;
+
+			// No units were chosen to move
+			if (totalOut == 0) {
+				System.out.println("\nAt least one unit must be sent, try again.");
+				getConfirmation();
+				clearScreen();
+				continue;
+			} else {
+				// Not enough units remaning
+				if (from.isDisputed() && (remaning >= from.getAttackers().getTotal())) {
+					System.out.println("\nRemaning units must match or exceed the number of attackers: ");
+					getConfirmation();
+					clearScreen();
+					continue;
+				} else if (remaning == 0) {
+					System.out.println("\nAt least one unit must remain, try again.");
+					getConfirmation();
+					clearScreen();
+					continue;
+				}
+			}
+
+			clearScreen();
+
+			// Checks if the player is satisfied
+			System.out.println("Units staying in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
+			System.out.println("Footmen: " + (fromUnit.getFoot()-ft) + " | Archers: " + (fromUnit.getArcher()-ar) + " | Cavalry: " 
+				+ (fromUnit.getCavalry()-cv) + " | Siege: " + (fromUnit.getSiege()-sg));
+
+			System.out.println("\nUnits going to " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": ");
+			System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
+			System.out.println("Footmen: " + (fromUnit.getFoot()-ft) + " | Archers: " + (fromUnit.getArcher()-ar) + " | Cavalry: " 
+				+ (fromUnit.getCavalry()-cv) + " | Siege: " + (fromUnit.getSiege()-sg));
+
+			System.out.print("\nConfirm unit placement (1 or 0): ");
+
+			if (getIntInput(0,1) == 1) {
+				break;
+			}
+		}
+
+		clearScreen();
+
+		// Split the unit using the input values
+		Army leaving = fromUnit.split(ft, ar, cv, sg);
+		
+		// Links new split unit to player
+		p.addUnit(leaving, to);
+
+		// Move new unit
+		if (to.getUnit() != null) {
+			// Occupied
+			to.setAttackers(leaving);
+			System.out.println("Units were placed successfully, good luck in battle!");
+		} else {
+			// Unoccupied
+			to.setUnit(leaving);
+			System.out.println("Units were placed successfully, " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + " is yours!");
+
+			// Check if a crown
+			if (to.hasCrown()) {
+				// Give crown and money
+				p.addCrowns(1);
+				p.addMoney(to.getValue());
+
+				System.out.println("Since this is a city you gain an additional crown and collect " + to.getValue() + "coins!");
+			}
+		}
+		getConfirmation();
 	}
 
 	private void maneuver(Player p) {

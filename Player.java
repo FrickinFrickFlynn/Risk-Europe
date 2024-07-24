@@ -191,10 +191,14 @@ public class Player {
 		totalActiveUnits[3] += siege;
 	}
 
+	// Checks if a territory is owned
+	public boolean isOwned(Territory t) {
+		return stationedUnits.containsKey(t);
+	}
+
 	// Adds a new unit to the player
 	public void addUnit(Army unit, Territory terr) {
 		stationedUnits.put(terr, unit);
-		addTotalUnits(unit.getFoot(), unit.getArcher(), unit.getCavalry(), unit.getSiege());
 	}
 
 	// Returns an array of the supply chain starting from a territory
@@ -203,16 +207,10 @@ public class Player {
 		ArrayList<Territory> chain = new ArrayList<Territory>();
 
 		// Check if the starting territory is owned
-		boolean isOwned = false;
-		for (int i = 0; i < occupied.length; i++) {
-			if (start.equals(occupied[i])) {
-				isOwned = true;
-				break;
-			}
-		}
+		boolean isOwn = isOwned(start);
 
 		// Also check if it is disputed
-		if (!isOwned || start.isDisputed()) return null;
+		if (!isOwn || start.isDisputed()) return null;
 
 		chainRecursion(start, chain, occupied);
 
@@ -238,6 +236,7 @@ public class Player {
 	*/
 	public Territory[] getTerritories() {
 		// Gets the territories from the hashmap as a set
+		// Returns a new array that is ok to change
 		return stationedUnits.keySet().toArray(new Territory[1]);
 	}
 

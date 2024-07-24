@@ -187,7 +187,12 @@ public class Territory {
 	}
 
 	public Territory[] getConnections() {
-		return connections;
+		Territory[] temp = new Territory[connections.length];
+
+		for (int i = 0; i < temp.length; i++)
+			temp[i] = connections[i];
+
+		return temp;
 	}
 
 	public String getCrownName() {
