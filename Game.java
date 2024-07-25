@@ -299,113 +299,20 @@ public class Game {
 
 			clearScreen();
 
-			// Pick adjacent space
-			System.out.println("\nAdjacent Territories: ");
-			Territory[] adj = chosenTerritory.getConnections();
-			for (int j = 0; j < adj.length; j++) {
-				System.out.println(adj[j].getName());
-			}
-
-			System.out.println("\nYou must divide your starting units between your capital and one adjacent non-city space.");
-			System.out.print("Please type the name of the adjacent space: ");
-
-			choice = getStringInput();
-			Territory chosenAdjacent = brd.getTerritory(choice);
-
-			// Check for bad input, nonexistent space, unit on space, and non-adjacent space.
-			while (chosenAdjacent == null || !chosenAdjacent.isAdjacent(chosenTerritory) || chosenAdjacent.getUnit() != null) {
-				System.out.print("Invalid name, try again: ");
-				choice = getStringInput();
-				chosenAdjacent = brd.getTerritory(choice);
-			}
-
-			/* 
-				Get unit distribution
-				continue and break are used to control this loop
-			*/
-			int ft, ar, cv, sg;
-			while (true) {
-				clearScreen();
-
-				// Display starting army
-				System.out.println("\nStarting Units: ");
-				System.out.println("Footmen: " + stArmyCnt[0] + " | Archers: " + stArmyCnt[1] + " | Cavalry: " 
-					+ stArmyCnt[2] + " | Siege: " + stArmyCnt[3]);
-				System.out.println("\nType the number of units to place on your capital: ");
-
-				// Get input from player
-				ft = ar = cv = sg = 0;
-				if (stArmyCnt[0] != 0) {
-					System.out.print("Footmen: ");
-					ft = getIntInput(0, stArmyCnt[0]);
-				}
-				
-				if (stArmyCnt[1] != 0) {
-					System.out.print("Archers: ");
-					ar = getIntInput(0, stArmyCnt[1]);
-				}
-
-				if (stArmyCnt[2] != 0) {
-					System.out.print("Cavalry: ");
-					cv = getIntInput(0, stArmyCnt[2]);
-				}
-
-				if (stArmyCnt[3] != 0) {
-					System.out.print("Siege: ");
-					sg = getIntInput(0, stArmyCnt[3]);
-				}
-
-				// Checks to see if no units were chosen or if they all were
-				int total = ft + ar + cv + sg;
-				int maxTotal = stArmyCnt[0] + stArmyCnt[1] + stArmyCnt[2] + stArmyCnt[3];
-
-				if (total == 0) {
-					System.out.println("\nAt least one unit must remain, try again.");
-					getConfirmation();
-					clearScreen();
-					continue;
-				} else if (total == maxTotal) {
-					System.out.println("\nAt least one unit must go onto the other territory, try again.");
-					getConfirmation();
-					clearScreen();
-					continue;
-				}
-
-				clearScreen();
-
-				// Checks if the player is satisfied
-				System.out.println("Units going to " + chosenTerritory.getCrownName() + ": ");
-				System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
-
-				System.out.println("\nUnits going to " + chosenAdjacent.getName() + ": ");
-				System.out.println("Footmen: " + (stArmyCnt[0]-ft) + " | Archers: " + (stArmyCnt[1]-ar) + " | Cavalry: " 
-					+ (stArmyCnt[2]-cv) + " | Siege: " + (stArmyCnt[3]-sg));
-
-				System.out.print("\nConfirm unit placement (1 or 0): ");
-
-				if (getIntInput(0,1) == 1) {
-					break;
-				}
-			}
-
-			// Create capital and adjacent units
-			Army capitalUnit = new Army(ft, ar, cv, sg);
-			Army adjacentUnit = new Army(stArmyCnt[0]-ft, stArmyCnt[1]-ar, stArmyCnt[2]-cv, stArmyCnt[3]-sg);
-
-			// Modify territories
-			chosenTerritory.setUnit(capitalUnit);
+			// Create a unit for the capital and assign it to the player
+			Army capUnit = new Army(stArmyCnt[0], stArmyCnt[1], stArmyCnt[2], stArmyCnt[3]);
+			chosenTerritory.setUnit(capUnit);
 			chosenTerritory.setCastle(true);
-			chosenAdjacent.setUnit(adjacentUnit);
-
-			// Modify player
+			p.addUnit(capUnit, chosenTerritory);
 			p.addCrowns(1);
 			p.addMoney(chosenTerritory.getValue());
-			p.addUnit(capitalUnit, chosenTerritory);
-			p.addUnit(adjacentUnit, chosenAdjacent);
-			p.addTotalUnits(stArmyCnt[0], stArmyCnt[1], stArmyCnt[2], stArmyCnt[3]);
 
-			System.out.println("\nUnits were placed!");
+			System.out.println("Your Kingdom's foundation has been established!");
+			System.out.println("You gain a castle, starting army, and " + chosenTerritory.getValue() + " coins!");
+			System.out.println("Now it is time to expand into other lands!");
 			getConfirmation();
+
+			expand(p);
 		}
 	}
 
@@ -473,81 +380,6 @@ public class Game {
 				System.out.println("Invalid card id");
 				break;
 		}
-	}
-
-	// Clear output
-	private void clearScreen() {
-		for (int i = 0; i < 75; i++) {
-			System.out.println();
-		}
-	}
-
-	/*
-		Used to get input from the user of a specific type
-		Only grabs the first token of a line, ignores the rest
-		low and high restrict the range of numbers, both inclusive
-	*/
-	private int getIntInput(int low, int high) {
-		int input = 0;
-		boolean valid = false;
-
-		do {
-			try {
-				input = sc.nextInt();
-
-				// In the event of bad range
-				if (input < low || input > high) {
-					System.out.print("Please pick a valid number: ");
-				} else {
-					valid = true;
-				}
-			} catch (InputMismatchException exp) {
-				// In the event of bad type
-				System.out.print("Please input a number: ");
-			}
-				
-			// Flushes everything including '\n' from input stream
-			sc.nextLine();
-		} while (!valid);
-
-		return input;
-	}
-
-	// Gets input of String type, trims leading chars
-	private String getStringInput() {
-		String input = sc.nextLine();
-
-		// Skips whitespace, stops on the first non-whitespace char
-		int i = 0;
-		while (i < input.length() && input.charAt(i) == ' ') i++;
-
-		// Skips non-whitespace, stops on the first whitespace
-		int j = i;
-		while (j < input.length() && input.charAt(j) != ' ') j++;
-
-		// Trim input
-		return input.substring(i, j);
-	}
-
-	// Pause execution
-	private void getConfirmation() {
-		System.out.print("Press ENTER to continue...");
-		sc.nextLine();
-	}
-
-	// For debug
-	public String toString() {
-		String out = "";
-		out += brd.toString() + "\n\n";
-
-		for (int i = 0; i < players.length; i++) {
-			out += players[i].toString() + "\n\n";
-		}
-
-		out += "\n\n";
-		out += firstPlayer.getName() + "\n";
-
-		return out;
 	}
 
 	// Finds highest tax value supply chain owned by p, adds it to their money
@@ -681,88 +513,11 @@ public class Game {
 			}
 		}
 
-		// Get the number of units to move
-		fromUnit = from.getUnit();
-
-		while (true) {
-			clearScreen();
-
-			// Display the army that will split
-			System.out.println("\nUnits stationed in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
-			System.out.println("Footmen: " + fromUnit.getFoot() + " | Archers: " + fromUnit.getArcher() + " | Cavalry: " 
-				+ fromUnit.getCavalry() + " | Siege: " + fromUnit.getSiege());
-			System.out.println("\nType the number of units that will expand into " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": ");
-
-			// Get input from player
-			ft = ar = cv = sg = 0;
-			if (fromUnit.getFoot() != 0) {
-				System.out.print("Footmen: ");
-				ft = getIntInput(0, fromUnit.getFoot());
-			}
-			
-			if (fromUnit.getArcher() != 0) {
-				System.out.print("Archers: ");
-				ar = getIntInput(0, fromUnit.getArcher());
-			}
-
-			if (fromUnit.getCavalry() != 0) {
-				System.out.print("Cavalry: ");
-				cv = getIntInput(0, fromUnit.getCavalry());
-			}
-
-			if (fromUnit.getSiege() != 0) {
-				System.out.print("Siege: ");
-				sg = getIntInput(0, fromUnit.getSiege());
-			}
-
-			// Checks for errors
-			int totalOut = ft + ar + cv + sg;
-			int remaning = (fromUnit.getFoot() + fromUnit.getArcher() + fromUnit.getCavalry() + fromUnit.getSiege()) - totalOut;
-
-			// No units were chosen to move
-			if (totalOut == 0) {
-				System.out.println("\nAt least one unit must be sent, try again.");
-				getConfirmation();
-				clearScreen();
-				continue;
-			} else {
-				// Not enough units remaning
-				if (from.isDisputed() && (remaning >= from.getAttackers().getTotal())) {
-					System.out.println("\nRemaning units must match or exceed the number of attackers: ");
-					getConfirmation();
-					clearScreen();
-					continue;
-				} else if (remaning == 0) {
-					System.out.println("\nAt least one unit must remain, try again.");
-					getConfirmation();
-					clearScreen();
-					continue;
-				}
-			}
-
-			clearScreen();
-
-			// Checks if the player is satisfied
-			System.out.println("Units staying in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
-			System.out.println("Footmen: " + (fromUnit.getFoot()-ft) + " | Archers: " + (fromUnit.getArcher()-ar) + " | Cavalry: " 
-				+ (fromUnit.getCavalry()-cv) + " | Siege: " + (fromUnit.getSiege()-sg));
-
-			System.out.println("\nUnits going to " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": ");
-			System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
-			System.out.println("Footmen: " + (fromUnit.getFoot()-ft) + " | Archers: " + (fromUnit.getArcher()-ar) + " | Cavalry: " 
-				+ (fromUnit.getCavalry()-cv) + " | Siege: " + (fromUnit.getSiege()-sg));
-
-			System.out.print("\nConfirm unit placement (1 or 0): ");
-
-			if (getIntInput(0,1) == 1) {
-				break;
-			}
-		}
-
+		int[] temp = getUnitInput(from, to);
 		clearScreen();
 
 		// Split the unit using the input values
-		Army leaving = fromUnit.split(ft, ar, cv, sg);
+		Army leaving = from.getUnit().split(temp[0], temp[1], temp[2], temp[3]);
 		
 		// Links new split unit to player
 		p.addUnit(leaving, to);
@@ -789,6 +544,8 @@ public class Game {
 		getConfirmation();
 	}
 
+	// Move units from a non-disputed territory into another territory you own
+	// Up to two spaces away in a supply chain
 	private void maneuver(Player p) {
 
 	}
@@ -807,5 +564,162 @@ public class Game {
 
 	private void siegeAssault(Player p) {
 		
+	}
+
+	// Clear output
+	private void clearScreen() {
+		for (int i = 0; i < 75; i++) {
+			System.out.println();
+		}
+	}
+
+	/*
+		Used to get input from the user of a specific type
+		Only grabs the first token of a line, ignores the rest
+		low and high restrict the range of numbers, both inclusive
+	*/
+	private int getIntInput(int low, int high) {
+		int input = 0;
+		boolean valid = false;
+
+		do {
+			try {
+				input = sc.nextInt();
+
+				// In the event of bad range
+				if (input < low || input > high) {
+					System.out.print("Please pick a valid number: ");
+				} else {
+					valid = true;
+				}
+			} catch (InputMismatchException exp) {
+				// In the event of bad type
+				System.out.print("Please input a number: ");
+			}
+				
+			// Flushes everything including '\n' from input stream
+			sc.nextLine();
+		} while (!valid);
+
+		return input;
+	}
+
+	// Gets input of String type, trims leading chars
+	private String getStringInput() {
+		String input = sc.nextLine();
+
+		// Skips whitespace, stops on the first non-whitespace char
+		int i = 0;
+		while (i < input.length() && input.charAt(i) == ' ') i++;
+
+		// Skips non-whitespace, stops on the first whitespace
+		int j = i;
+		while (j < input.length() && input.charAt(j) != ' ') j++;
+
+		// Trim input
+		return input.substring(i, j);
+	}
+
+	// Pause execution
+	private void getConfirmation() {
+		System.out.print("Press ENTER to continue...");
+		sc.nextLine();
+	}
+
+	// For debug
+	public String toString() {
+		String out = "";
+		out += brd.toString() + "\n\n";
+
+		for (int i = 0; i < players.length; i++) {
+			out += players[i].toString() + "\n\n";
+		}
+
+		out += "\n\n";
+		out += firstPlayer.getName() + "\n";
+
+		return out;
+	}
+
+	// Gets the number of units to send from the player
+	private int[] getUnitInput(Territory from, Territory to) {
+		int ft, ar, cv, sg;
+		Army fromUnit = from.getUnit();
+
+		while (true) {
+			clearScreen();
+
+			// Display the army that will split
+			System.out.println("\nUnits stationed in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
+			System.out.println("Footmen: " + fromUnit.getFoot() + " | Archers: " + fromUnit.getArcher() + " | Cavalry: " 
+				+ fromUnit.getCavalry() + " | Siege: " + fromUnit.getSiege());
+			System.out.println("\nType the number of units that will expand into " + (to.hasCrown() ? to.getCrownName() : to.getName()) + ": ");
+
+			// Get input from player
+			ft = ar = cv = sg = 0;
+			if (fromUnit.getFoot() != 0) {
+				System.out.print("Footmen: ");
+				ft = getIntInput(0, fromUnit.getFoot());
+			}
+			
+			if (fromUnit.getArcher() != 0) {
+				System.out.print("Archers: ");
+				ar = getIntInput(0, fromUnit.getArcher());
+			}
+
+			if (fromUnit.getCavalry() != 0) {
+				System.out.print("Cavalry: ");
+				cv = getIntInput(0, fromUnit.getCavalry());
+			}
+
+			if (fromUnit.getSiege() != 0) {
+				System.out.print("Siege: ");
+				sg = getIntInput(0, fromUnit.getSiege());
+			}
+
+			// Checks for errors
+			int totalOut = ft + ar + cv + sg;
+			int remaining = (fromUnit.getFoot() + fromUnit.getArcher() + fromUnit.getCavalry() + fromUnit.getSiege()) - totalOut;
+
+			// No units were chosen to move
+			if (totalOut == 0) {
+				System.out.println("\nAt least one unit must be sent, try again.");
+				getConfirmation();
+				clearScreen();
+				continue;
+			} else {
+				// Not enough units remaning
+				if (from.isDisputed() && (remaining >= from.getAttackers().getTotal())) {
+					System.out.println("\nRemaning units must match or exceed the number of attackers: ");
+					getConfirmation();
+					clearScreen();
+					continue;
+				} else if (remaining == 0) {
+					System.out.println("\nAt least one unit must remain, try again.");
+					getConfirmation();
+					clearScreen();
+					continue;
+				}
+			}
+
+			clearScreen();
+
+			// Checks if the player is satisfied
+			System.out.println("Units staying in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
+			System.out.println("Footmen: " + (fromUnit.getFoot()-ft) + " | Archers: " + (fromUnit.getArcher()-ar) + " | Cavalry: " 
+				+ (fromUnit.getCavalry()-cv) + " | Siege: " + (fromUnit.getSiege()-sg));
+
+			System.out.println("\nUnits going to " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": ");
+			System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
+
+			System.out.print("\nConfirm unit placement (1 or 0): ");
+
+			if (getIntInput(0,1) == 1) {
+				break;
+			}
+		}
+
+		int[] out = {ft, ar, cv, sg};
+		return out;
 	}
 }
