@@ -91,6 +91,33 @@ public class Territory {
 	}
 
 	/*
+		TerritoryName(crown preferred) - Def:(f, a, c, s) - Atk:(f, a, c, s) - Castle: Yes
+	*/
+	public void display() {
+		String out;
+
+		if (this.crown) {
+			out = this.crownName;
+		} else {
+			out = this.name;
+		}
+
+		if (this.unit != null) {
+			out += " - Def:(" + unit.getFoot() + ", " + unit.getArcher() + ", " + unit.getCavalry() + ", " + unit.getSiege() + ")";
+		}
+
+		if (this.attackers != null) {
+			out += " - Atk:(" + attackers.getFoot() + ", " + attackers.getArcher() + ", " + attackers.getCavalry() + ", " + attackers.getSiege() + ")";
+		}
+
+		if (this.castle) {
+			out += " - Castle";
+		}
+
+		System.out.println(out);
+	}
+
+	/*
 		Connects two territories by appending their connection arrays
 	*/
 	public void addConnection(Territory newTerr) {

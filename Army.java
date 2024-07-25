@@ -6,12 +6,17 @@ public class Army {
 	//The total amount of units regardless of type and value.
 	private int unitTotal;
 
-	public Army(int foot, int archer, int cavalry, int siege) {
+	//Player this army belongs to
+	private Player owner;
+
+	public Army(int foot, int archer, int cavalry, int siege, Player owner) {
 		units[0] = foot;
 		units[1] = archer;
 		units[2] = cavalry;
 		units[3] = siege;
 		unitTotal = foot + archer + cavalry + siege;
+
+		this.owner = owner;
 	}
 
 	//Return total amount of units
@@ -37,6 +42,11 @@ public class Army {
 	//Return total amount of siege weapons
 	public int getSiege() {
 		return units[3];
+	}
+
+	//Return owner
+	public Player getOwner() {
+		return owner;
 	}
 
 	/* 
@@ -99,7 +109,7 @@ public class Army {
 		Expects legal numbers
 	*/
 	public Army split(int f, int a, int c, int s) {
-		Army other = new Army(f,a,c,s);
+		Army other = new Army(f,a,c,s,owner);
 
 		units[0] -= f;
 		units[1] -= a;
@@ -112,7 +122,7 @@ public class Army {
 
 	// Format: Footmen - #, Archer - #, Cavalry - #, Siege - #
 	public String toString() {
-		return "Footmen: " + units[0] + "| Archers: " + units[1] + 
-		"| Cavalry: " + units[2] + "| Siege: " + units[3];
+		return "Footmen: " + units[0] + " | Archers: " + units[1] + 
+		" | Cavalry: " + units[2] + " | Siege: " + units[3];
 	}
 }

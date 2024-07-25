@@ -34,6 +34,7 @@
 */
 import java.util.Scanner;
 import java.util.Random;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 
 public class Game {
@@ -300,7 +301,7 @@ public class Game {
 			clearScreen();
 
 			// Create a unit for the capital and assign it to the player
-			Army capUnit = new Army(stArmyCnt[0], stArmyCnt[1], stArmyCnt[2], stArmyCnt[3]);
+			Army capUnit = new Army(stArmyCnt[0], stArmyCnt[1], stArmyCnt[2], stArmyCnt[3], p);
 			chosenTerritory.setUnit(capUnit);
 			chosenTerritory.setCastle(true);
 			p.addUnit(capUnit, chosenTerritory);
@@ -312,7 +313,7 @@ public class Game {
 			System.out.println("Now it is time to expand into other lands!");
 			getConfirmation();
 
-			expand(p);
+			expand(p, true);
 		}
 	}
 
@@ -363,12 +364,12 @@ public class Game {
 				firstPlayer = p;
 				break;
 			case 3:					// Expand Maneuver (Fortify)
-				if (action == 1) expand(p); 
+				if (action == 1) expand(p, false); 
 				else maneuver(p);
 				fortify(p);
 				break;
 			case 4:					// Expand Maneuver (Siege Assault)
-				if (action == 1) expand(p); 
+				if (action == 1) expand(p, false); 
 				else maneuver(p);
 				siegeAssault(p);
 				break;
@@ -417,14 +418,13 @@ public class Game {
 
 	// Move units into undisputed territory (unowned)
 	// Must keep one, or the same as the attackers if moving from disputed
-	private void expand(Player p) {
+	private void expand(Player p, boolean isSetup) {
 		Territory[] owned = p.getTerritories();
 		Territory[] fromAdj;
 		Territory from = null, to = null;
 		Army fromUnit;
 		String input;
 		boolean isFinal = false;
-		int ft, ar, cv, sg;
 		
 		// Repeat until the user finalizes their decision
 		while (!isFinal) {
@@ -434,10 +434,8 @@ public class Game {
 			// Display owned territories
 			System.out.println("\nYour Territories: ");
 			for (int i = 0; i < owned.length; i++) {
-				if (owned[i].hasCrown()) {
-					System.out.println(owned[i].getCrownName());
-				} else {
-					System.out.println(owned[i].getName());
+				if (owned[i].getUnit().totalValue() > 1) {
+					owned[i].display();
 				}
 			}
 
@@ -452,6 +450,8 @@ public class Game {
 					System.out.print("Territory does not exist: ");
 				} else if (!p.isOwned(from)) {
 					System.out.print("You do not own that: ");
+				} else if (from.getUnit().totalValue() <= 1) {
+					System.out.print("There must be more than one unit: ");
 				} else {
 					break;
 				}
@@ -463,7 +463,7 @@ public class Game {
 				// Check if there is a castle and no seige weapon
 				if (fromAdj[i].hasCastle() && from.getUnit().getSiege() == 0) {
 					fromAdj[i] = null;
-				} else if (fromAdj[i].isDisputed() || p.isOwned(fromAdj[i])) {
+				} else if (fromAdj[i].isDisputed() || p.isOwned(fromAdj[i]) || (isSetup && fromAdj[i].getUnit() != null)) {
 					fromAdj[i] = null;
 				}
 			}
@@ -473,11 +473,7 @@ public class Game {
 
 			for (int i = 0; i < fromAdj.length; i++) {
 				if (fromAdj[i] != null) {
-					if (fromAdj[i].hasCrown()) {
-						System.out.println(fromAdj[i].getCrownName());
-					} else {
-						System.out.println(fromAdj[i].getName());
-					}
+					fromAdj[i].display();
 				}
 			}
 
@@ -538,7 +534,7 @@ public class Game {
 				p.addCrowns(1);
 				p.addMoney(to.getValue());
 
-				System.out.println("Since this is a city you gain an additional crown and collect " + to.getValue() + "coins!");
+				System.out.println("Since this is a city you gain an additional crown and collect " + to.getValue() + " coins!");
 			}
 		}
 		getConfirmation();
@@ -547,7 +543,118 @@ public class Game {
 	// Move units from a non-disputed territory into another territory you own
 	// Up to two spaces away in a supply chain
 	private void maneuver(Player p) {
+		Territory from = null, to = null;
+		Territory[] owned = p.getTerritories();
+		boolean isFinal = false;
+		String input;
+		
+		// Repeat until the user finalizes their decision
+		while (!isFinal) {
 
+			clearScreen();
+			System.out.println("Maneuver:");
+
+			// Display owned territories
+			System.out.println("\nYour Territories: ");
+			for (int i = 0; i < owned.length; i++) {
+				if (owned[i].getUnit().totalValue() > 1) {
+					owned[i].display();
+				}
+			}
+
+			// Get input from the player
+			System.out.print("\nInput a territory you own to see where you can maneuver: ");
+		
+			while (true) {
+				input = getStringInput();
+				from = brd.getTerritory(input);
+
+				if (from == null) {
+					System.out.print("Territory does not exist: ");
+				} else if (!p.isOwned(from)) {
+					System.out.print("You do not own that: ");
+				} else if (from.getUnit().totalValue() <= 1) {
+					System.out.print("There must be more than one unit: ");
+				} else {
+					break;
+				}
+			}
+
+			// Generate list of maneuverable territories
+			ArrayList<Territory> maneuverable = new ArrayList<Territory>();
+			Territory[] fromConn = from.getConnections();
+
+			for (int i = 0; i < fromConn.length; i++) {
+				Territory[] subConn = fromConn[i].getConnections();
+				if (p.isOwned(fromConn[i]) && !maneuverable.contains(fromConn[i])) {
+					maneuverable.add(fromConn[i]);
+				}
+
+				for (int j = 0; j < subConn.length; j++) {
+					if (p.isOwned(subConn[j]) && !maneuverable.contains(subConn[j])) {
+						maneuverable.add(subConn[j]);
+					}
+				}
+			}
+
+			maneuverable.remove(from);
+
+			// Display valid territories
+			System.out.println("\nDestinations: ");
+
+			for (Territory t : maneuverable) {
+				t.display();
+			}
+
+			System.out.print("\nChoose a destination or type 'retry' to start over: ");
+
+			boolean val = false;
+			while (!val) {
+				input = getStringInput();
+				
+				// Checks for retry
+				if (input.equalsIgnoreCase("retry")) {
+					// Exits loop prematurely preventing isFinal from being set
+					break;
+				}
+
+				to = brd.getTerritory(input);
+
+				// Checks if the chosen territory is valid
+				if (maneuverable.contains(to)) {
+					val = true;
+				}
+
+				if (to == null) {
+					System.out.print("Territory does not exist: ");
+				} else if (!val) {
+					System.out.print("Invalid: ");
+				} else {
+					// Runs right before exiting loop
+					isFinal = true;
+				}
+			}
+		}
+
+		// Get number of units to send
+		int[] temp = getUnitInput(from, to);
+		clearScreen();
+
+		// Moves units over
+		Army moving = from.getUnit().split(temp[0], temp[1], temp[2], temp[3]);
+
+		// Check if the player is the owner
+		if (p.equals(to.getUnit().getOwner())) {
+			to.getUnit().combine(moving);
+			System.out.println("Units were placed successfully!");
+		}  else {
+			// Must be the attacker
+			to.getAttackers().combine(moving);
+			System.out.println("Units were placed successfully, may your reinforcements lead to victory!");
+		}
+
+		moving = null;
+		getConfirmation();
 	}
 
 	private void spend(Player p) {
@@ -653,7 +760,7 @@ public class Game {
 			System.out.println("\nUnits stationed in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
 			System.out.println("Footmen: " + fromUnit.getFoot() + " | Archers: " + fromUnit.getArcher() + " | Cavalry: " 
 				+ fromUnit.getCavalry() + " | Siege: " + fromUnit.getSiege());
-			System.out.println("\nType the number of units that will expand into " + (to.hasCrown() ? to.getCrownName() : to.getName()) + ": ");
+			System.out.println("\nType the number of units that will move to " + (to.hasCrown() ? to.getCrownName() : to.getName()) + ": ");
 
 			// Get input from player
 			ft = ar = cv = sg = 0;
@@ -711,6 +818,15 @@ public class Game {
 
 			System.out.println("\nUnits going to " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": ");
 			System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
+
+			if (to.getUnit() != null) {
+				// There is a unit there
+				System.out.println("\nDefending Unit in " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": \n" + to.getUnit());
+			}
+
+			if (to.getAttackers() != null) {
+				System.out.println("\nAttacking Unit in " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": \n" + to.getAttackers());
+			}
 
 			System.out.print("\nConfirm unit placement (1 or 0): ");
 
