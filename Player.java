@@ -191,9 +191,14 @@ public class Player {
 		totalActiveUnits[3] += siege;
 	}
 
-	// Checks if a territory is owned
-	public boolean isOwned(Territory t) {
+	// Checks if a player's unit is on a territory
+	public boolean isOn(Territory t) {
 		return stationedUnits.containsKey(t);
+	}
+
+	// Checks if a player is defending a space, must be on the space
+	public boolean isDefending(Territory t) {
+		return this.equals(t.getUnit().getOwner());
 	}
 
 	// Adds a new unit to the player
@@ -207,7 +212,7 @@ public class Player {
 		ArrayList<Territory> chain = new ArrayList<Territory>();
 
 		// Check if the starting territory is owned
-		boolean isOwn = isOwned(start);
+		boolean isOwn = isOn(start);
 
 		// Also check if it is disputed
 		if (!isOwn || start.isDisputed()) return null;

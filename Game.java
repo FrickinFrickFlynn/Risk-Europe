@@ -19,18 +19,6 @@
 		- Turn1 & Turn2
 		- Resolve territory disputes
 		- Check for win, repeat otherwise
-
-	public static void main(String[] args) {
-		setup();
-
-		while (winner == null) {
-			setTurnOrder();
-			chooseCards();
-			takeTurns();
-			resolveDisputes();
-			checkWin();
-		}
-	}
 */
 import java.util.Scanner;
 import java.util.Random;
@@ -425,7 +413,7 @@ public class Game {
 		Army fromUnit;
 		String input;
 		boolean isFinal = false;
-		
+
 		// Repeat until the user finalizes their decision
 		while (!isFinal) {
 			clearScreen();
@@ -440,7 +428,7 @@ public class Game {
 			}
 
 			// Get input from the player
-			System.out.print("\nInput a territory you own to see where you can expand into: ");
+			System.out.print("\nSelect where you want to expand from: ");
 		
 			while (true) {
 				input = getStringInput();
@@ -448,7 +436,7 @@ public class Game {
 
 				if (from == null) {
 					System.out.print("Territory does not exist: ");
-				} else if (!p.isOwned(from)) {
+				} else if (!p.isOn(from)) {
 					System.out.print("You do not own that: ");
 				} else if (from.getUnit().totalValue() <= 1) {
 					System.out.print("There must be more than one unit: ");
@@ -463,12 +451,12 @@ public class Game {
 				// Check if there is a castle and no seige weapon
 				if (fromAdj[i].hasCastle() && from.getUnit().getSiege() == 0) {
 					fromAdj[i] = null;
-				} else if (fromAdj[i].isDisputed() || p.isOwned(fromAdj[i]) || (isSetup && fromAdj[i].getUnit() != null)) {
+				} else if (fromAdj[i].isDisputed() || p.isOn(fromAdj[i]) || (isSetup && fromAdj[i].getUnit() != null)) {
 					fromAdj[i] = null;
 				}
 			}
 
-			// Display them and query the player
+			// Display the destinations
 			System.out.println("\nDestinations: ");
 
 			for (int i = 0; i < fromAdj.length; i++) {
@@ -479,6 +467,7 @@ public class Game {
 
 			System.out.print("\nChoose a destination or type 'retry' to start over: ");
 
+			// Get user input 
 			boolean val = false;
 			while (!val) {
 				input = getStringInput();
@@ -563,7 +552,7 @@ public class Game {
 			}
 
 			// Get input from the player
-			System.out.print("\nInput a territory you own to see where you can maneuver: ");
+			System.out.print("\nSelect where you want to maneuver from: ");
 		
 			while (true) {
 				input = getStringInput();
@@ -571,7 +560,7 @@ public class Game {
 
 				if (from == null) {
 					System.out.print("Territory does not exist: ");
-				} else if (!p.isOwned(from)) {
+				} else if (!p.isOn(from)) {
 					System.out.print("You do not own that: ");
 				} else if (from.getUnit().totalValue() <= 1) {
 					System.out.print("There must be more than one unit: ");
@@ -586,12 +575,12 @@ public class Game {
 
 			for (int i = 0; i < fromConn.length; i++) {
 				Territory[] subConn = fromConn[i].getConnections();
-				if (p.isOwned(fromConn[i]) && !maneuverable.contains(fromConn[i])) {
+				if (p.isOn(fromConn[i]) && !maneuverable.contains(fromConn[i])) {
 					maneuverable.add(fromConn[i]);
 				}
 
 				for (int j = 0; j < subConn.length; j++) {
-					if (p.isOwned(subConn[j]) && !maneuverable.contains(subConn[j])) {
+					if (p.isOn(subConn[j]) && !maneuverable.contains(subConn[j])) {
 						maneuverable.add(subConn[j]);
 					}
 				}
@@ -665,8 +654,58 @@ public class Game {
 
 	}
 
+	// Adds three footsoldiers on city, four on castle
 	private void fortify(Player p) {
-		
+		clearScreen();
+		System.out.println("Fortify:");
+
+		// Display owned cities and castle territories
+		System.out.println("\nFortifiable Territories:");
+
+		Territory[] owned = p.getTerritories();
+		for (int i = 0; i < owned.length; i++) {
+			if (p.isDefending(owned[i]) && (owned[i].hasCastle() || owned[i].hasCrown())) {
+				owned[i].display();
+			}
+		}
+
+		// Get input from the player
+		System.out.print("\nSelect where you would like to fortify: ");
+	
+		Territory chosen;
+		String input;
+		while (true) {
+			input = getStringInput();
+			chosen = brd.getTerritory(input);
+			
+			if (chosen == null) {
+				System.out.print("Territory does not exist: ");
+			} else if (!p.isOn(chosen)) {
+				System.out.print("You do not own that: ");
+			} else if (!chosen.hasCrown() || !chosen.hasCastle()) {
+				System.out.print("Territory must be a city or castle: ");
+			} else if (!p.isDefending(chosen)){
+				System.out.print("You must be defending: ");
+			} else {
+				break;
+			}
+		}
+
+		// Determine number of units
+		int numOfUnits = chosen.hasCastle() ? 4 : 3;
+
+		if (p.getTotalFoot() + numOfUnits > maxUnits[0]) {
+			// Will exceed max units, get remainder
+			numOfUnits = maxUnits[0] - p.getTotalFoot();
+		}
+
+		// Add units to space
+		chosen.getUnit().combine(new Army(numOfUnits,0,0,0, p));
+		p.addTotalUnits(numOfUnits,0,0,0);
+
+		clearScreen();
+		System.out.println(numOfUnits + " footsoldiers were added to " + (chosen.hasCrown() ? chosen.getCrownName() : chosen.getName()) + "!");
+		getConfirmation();
 	}
 
 	private void siegeAssault(Player p) {
