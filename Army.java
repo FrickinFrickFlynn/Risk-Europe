@@ -10,13 +10,16 @@ public class Army {
 	private Player owner;
 
 	public Army(int foot, int archer, int cavalry, int siege, Player owner) {
+		this(foot, archer, cavalry, siege);
+		this.owner = owner;
+	}
+
+	public Army(int foot, int archer, int cavalry, int siege) {
 		units[0] = foot;
 		units[1] = archer;
 		units[2] = cavalry;
 		units[3] = siege;
 		unitTotal = foot + archer + cavalry + siege;
-
-		this.owner = owner;
 	}
 
 	//Return total amount of units

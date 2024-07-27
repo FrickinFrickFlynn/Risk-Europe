@@ -12,7 +12,6 @@
 		discard pile represents cards that have been played, active cards are the
 		cards that will be played each turn
 */
-import java.util.HashMap;
 import java.util.ArrayList;
 
 public class Player {
@@ -22,7 +21,7 @@ public class Player {
 	private int crowns;
 
 	private int[] totalActiveUnits; 				// [foot, arch, cav, siege]
-	private HashMap<Territory, Army> stationedUnits; 
+	private ArrayList<Territory> occupiedTerritories; 
 
 	private int[] drawPile;
 	private int[] discardPile;
@@ -33,30 +32,20 @@ public class Player {
 		Constructors
 	*/
 	public Player(String name, String faction, int money, int crowns) {
-		this.name = name;
-		this.faction = faction;
+		this(name, faction);
 		this.money = money;
 		this.crowns = crowns;
-		totalActiveUnits = new int[4];
-		stationedUnits = new HashMap<Territory, Army>();
 	}
 
 	public Player(String name, String faction) {
 		this.name = name;
 		this.faction = faction;
-		money = 0;
-		crowns = 0;
 		totalActiveUnits = new int[4];
-		stationedUnits = new HashMap<Territory, Army>();
+		occupiedTerritories = new ArrayList<Territory>();
 	}
 
 	public Player() {
-		name = "John Doe";
-		faction = "No Team";
-		money = 0;
-		crowns = 0;
-		totalActiveUnits = new int[4];
-		stationedUnits = new HashMap<Territory, Army>();
+		this("John Doe", "No Team");
 	}
 
 	/*
@@ -191,19 +180,19 @@ public class Player {
 		totalActiveUnits[3] += siege;
 	}
 
-	// Checks if a player's unit is on a territory
+	// Checks if a player is on a territory
 	public boolean isOn(Territory t) {
-		return stationedUnits.containsKey(t);
+		return occupiedTerritories.contains(t);
 	}
 
 	// Checks if a player is defending a space, must be on the space
 	public boolean isDefending(Territory t) {
-		return this.equals(t.getUnit().getOwner());
+		return this.equals(t.getDefPly());
 	}
 
-	// Adds a new unit to the player
-	public void addUnit(Army unit, Territory terr) {
-		stationedUnits.put(terr, unit);
+	// Adds a new territory to the player
+	public void addTerr(Territory terr) {
+		occupiedTerritories.add(terr);
 	}
 
 	// Returns an array of the supply chain starting from a territory
@@ -242,7 +231,7 @@ public class Player {
 	public Territory[] getTerritories() {
 		// Gets the territories from the hashmap as a set
 		// Returns a new array that is ok to change
-		return stationedUnits.keySet().toArray(new Territory[1]);
+		return occupiedTerritories.toArray(new Territory[1]);
 	}
 
 	public String getName() {

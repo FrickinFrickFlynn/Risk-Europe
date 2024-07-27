@@ -12,8 +12,8 @@ public class Territory {
 	private String name;
 	private int value;
 	private Territory[] connections;
-	private Army attackers;
-	private Army unit;
+	private Army atk;
+	private Army def;
 	private boolean crown;
 	private String crownName;
 	private boolean canStart;
@@ -22,12 +22,12 @@ public class Territory {
 	/*
 		Constructors for all fields, intensive qualities, and bare minimum
 	*/
-	public Territory(String name, int value, Territory[] connections, Army unit, Army attackers, boolean crown, String crownName, boolean canStart, boolean castle) {
+	public Territory(String name, int value, Territory[] connections, Army def, Army atk, boolean crown, String crownName, boolean canStart, boolean castle) {
 		this.name = name;
 		this.value = value;
 		this.connections = connections;
-		this.unit = unit;
-		this.attackers = attackers;
+		this.def = def;
+		this.atk = atk;
 		this.crown = crown;
 		this.crownName = crownName;
 		this.canStart = canStart;
@@ -35,46 +35,50 @@ public class Territory {
 	}
 
 	public Territory(String name, int value, boolean crown, String crownName, boolean canStart) {
-		this.name = name;
-		this.value = value;
+		this(name, value);
 		this.crown = crown;
 		this.crownName = crownName;
 		this.canStart = canStart;
-		connections = new Territory[0];
-		unit = null;
-		attackers = null;
-		castle = false;
 	}
 
 	public Territory(String name, int value) {
 		this.name = name;
 		this.value = value;
-		crown = false;
 		crownName = "";
-		canStart = false;
 		connections = new Territory[0];
-		unit = null;
-		attackers = null;
-		castle = false;
 	}
 
 	public Territory() {
-		name = "";
-		value = 1;
-		connections = new Territory[0];
-		unit = null;
-		attackers = null;
-		crown = false;
-		crownName = "";
-		castle = false;
-		canStart = false;
+		this("", 1);
 	}
 
 	/*
 		Special getter method checks if the territory is disputed
 	*/
 	public boolean isDisputed() {
-		return attackers != null;
+		return atk != null;
+	}
+
+	/*
+		Special getter returns the player who defends this territory
+	*/
+	public Player getDefPly() {
+		if (def != null) {
+			return def.getOwner();
+		}
+
+		return null;
+	}
+
+	/*
+		Sepcial getter returns the player who is attacking
+	*/
+	public Player getAtkPly() {
+		if (atk != null) {
+			return atk.getOwner();
+		}
+
+		return null;
 	}
 
 	/*
@@ -102,12 +106,12 @@ public class Territory {
 			out = this.name;
 		}
 
-		if (this.unit != null) {
-			out += " - Def:(" + unit.getFoot() + ", " + unit.getArcher() + ", " + unit.getCavalry() + ", " + unit.getSiege() + ")";
+		if (this.def != null) {
+			out += " - Def:(" + def.getFoot() + ", " + def.getArcher() + ", " + def.getCavalry() + ", " + def.getSiege() + ")";
 		}
 
-		if (this.attackers != null) {
-			out += " - Atk:(" + attackers.getFoot() + ", " + attackers.getArcher() + ", " + attackers.getCavalry() + ", " + attackers.getSiege() + ")";
+		if (this.atk != null) {
+			out += " - Atk:(" + atk.getFoot() + ", " + atk.getArcher() + ", " + atk.getCavalry() + ", " + atk.getSiege() + ")";
 		}
 
 		if (this.castle) {
@@ -146,12 +150,12 @@ public class Territory {
 	/*
 		Setters
 	*/
-	public void setUnit(Army unit) {
-		this.unit = unit;
+	public void setDef(Army def) {
+		this.def = def;
 	}
 
-	public void setAttackers(Army attackers) {
-		this.attackers = attackers;
+	public void setAtk(Army atk) {
+		this.atk = atk;
 	}
 
 	public void setName(String name) {
@@ -185,8 +189,8 @@ public class Territory {
 	/*
 		Getters
 	*/
-	public Army getAttackers() {
-		return attackers;
+	public Army getAtk() {
+		return atk;
 	}
 
 	public boolean hasCastle() {
@@ -201,8 +205,8 @@ public class Territory {
 		return name;
 	}
 
-	public Army getUnit() {
-		return unit;
+	public Army getDef() {
+		return def;
 	}
 
 	public int getValue() {
@@ -231,7 +235,7 @@ public class Territory {
 	*/
 	public String toString() {
 		String str = "[" + name + ", " + value + "]\nCrown: " + crown + "\nCrown Name: " + ((crownName == null) ? "None" : crownName) 
-		+ "\nCanStart: " + canStart + "\nCastle: " + castle + "\nUnit: " + unit + "\nAttackers: " + attackers + "\nConnections:\n";
+		+ "\nCanStart: " + canStart + "\nCastle: " + castle + "\nDefenders: " + def + "\nAttackers: " + atk + "\nConnections:\n";
 		
 		for (int i = 0; i < connections.length; i++) {
 			str += connections[i].getName() + "\n";
