@@ -490,6 +490,7 @@ public class Game {
 				// Checks for retry
 				if (input.equalsIgnoreCase("retry")) {
 					// Exits loop prematurely preventing isFinal from being set
+					expand(p, isSetup);
 					break;
 				}
 
@@ -725,7 +726,7 @@ public class Game {
 
 			int tempFunds = p.getMoney();
 			for (int i = 0; i < deployable.length; i++) {
-				if (tempFunds > 0 && deployable[i] > 0) {
+				if (tempFunds > 0 && deployable[i] > 0 && tempFunds >= unitValue[i]) {
 					System.out.print("Funds: £" + tempFunds + "  ");
 					while (true) {
 						switch (i) {
@@ -743,10 +744,14 @@ public class Game {
 							System.out.println("Not enough funds, try again.");
 							continue;
 						}
-						
+							
+						// Remove funds
 						tempFunds -= sending[i] * unitValue[i];
 						break;
 					}
+				} else {
+					// Units that are skipped should be reset so they are not applied twice
+					sending[i] = 0;
 				}
 			}
 
