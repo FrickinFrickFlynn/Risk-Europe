@@ -316,7 +316,7 @@ public class Game {
 			System.out.println("Now it is time to expand into other lands!");
 			getConfirmation();
 
-			expand(p, true);
+			expand(p, true, false);
 		}
 	}
 
@@ -367,17 +367,17 @@ public class Game {
 				firstPlayer = p;
 				break;
 			case 3:					// Expand Maneuver (Fortify)
-				if (action == 1) expand(p, false); 
+				if (action == 1) expand(p, false, false); 
 				else maneuver(p);
 				fortify(p);
 				break;
 			case 4:					// Expand Maneuver (Siege Assault)
-				if (action == 1) expand(p, false); 
+				if (action == 1) expand(p, false, false); 
 				else maneuver(p);
 				siegeAssault(p);
 				break;
 			case 5:					// SplitExpand Maneuver
-				if (action == 1) splitExpand(p); 
+				if (action == 1) expand(p, false, true); 
 				else maneuver(p);
 				break;
 			default:				// Default case
@@ -421,18 +421,17 @@ public class Game {
 
 	// Move units into undisputed territory (unowned)
 	// Must keep one, or the same as the attackers if moving from disputed
-	private void expand(Player p, boolean isSetup) {
+	private void expand(Player p, boolean isSetup, boolean isSplit) {
 		Territory[] owned = p.getTerritories();
 		Territory[] fromAdj;
-		Territory from = null, to = null;
-		Army fromUnit;
+		Territory from = null, to = null, splitTo = null;
 		String input;
 		boolean isFinal = false;
 
 		// Repeat until the user finalizes their decision
 		while (!isFinal) {
 			clearScreen();
-			System.out.println("Expand:");
+			System.out.println((isSplit ? "Split " : "") + "Expand:");
 
 			// Display owned territories
 			System.out.println("\nYour Territories: ");
@@ -482,67 +481,112 @@ public class Game {
 
 			System.out.print("\nChoose a destination or type 'retry' to start over: ");
 
-			// Get user input 
-			boolean val = false;
-			while (!val) {
+			// // Get user input 
+			// boolean val = false;
+			// while (!val) {
+			// 	input = getStringInput();
+
+			// 	// Checks for retry
+			// 	if (input.equalsIgnoreCase("retry")) {
+			// 		// Exits loop prematurely preventing isFinal from being set
+			// 		break;
+			// 	}
+
+			// 	to = brd.getTerritory(input);
+
+			// 	// Checks if the chosen territory is valid
+			// 	for (int i = 0; i < fromAdj.length; i++) {
+			// 		if (fromAdj[i] != null && fromAdj[i].equals(to)) {
+			// 			val = true;
+			// 		}
+			// 	}
+
+			// 	// Prints 
+			// 	if (to == null) {
+			// 		System.out.print("Territory does not exist: ");
+			// 	} else if (!val) {
+			// 		System.out.print("Invalid: ");
+			// 	} else {
+			// 		// Runs right before exiting loop
+			// 		isFinal = true;
+			// 	}
+			// }
+
+			Territory temp;
+			to = splitTo = null;
+
+			while (to == null) {
 				input = getStringInput();
 
-				// Checks for retry
 				if (input.equalsIgnoreCase("retry")) {
-					// Exits loop prematurely preventing isFinal from being set
-					expand(p, isSetup);
 					break;
 				}
 
-				to = brd.getTerritory(input);
+				temp = brd.getTerritory(input);
 
-				// Checks if the chosen territory is valid
 				for (int i = 0; i < fromAdj.length; i++) {
-					if (fromAdj[i] != null && fromAdj[i].equals(to)) {
-						val = true;
+					if (fromAdj[i] != null && fromAdj[i].equals(temp)) {
+						if (isSplit && splitTo == null) {
+							splitTo = temp;
+							fromAdj[i] = null;
+						} else {
+							to = temp;
+						}
 					}
 				}
 
-				if (to == null) {
+				if (temp == null) {
 					System.out.print("Territory does not exist: ");
-				} else if (!val) {
+				} else if (isSplit && splitTo == null) {
+					System.out.print("Invalid: ");
+				} else if (isSplit && to == null) {
+					System.out.print("Pick the second destination: ");
+				} else if (!isSplit && to == null) {
 					System.out.print("Invalid: ");
 				} else {
-					// Runs right before exiting loop
 					isFinal = true;
 				}
 			}
 		}
 
-		int[] temp = getUnitInput(from, to);
-		clearScreen();
+		// Repeat if this is a split expand
+		int bound = isSplit ? 2 : 1;
 
-		// Split the unit using the input values
-		Army leaving = from.getDef().split(temp[0], temp[1], temp[2], temp[3]);
-		
-		// Links new split unit to player
-		p.addTerr(to);
+		for (int i = 0; i < bound; i++) {
+			int[] temp = getUnitInput(from, to);
+			clearScreen();
 
-		// Move new unit
-		if (to.getDef() != null) {
-			// Occupied
-			to.setAtk(leaving);
-			System.out.println("Units were placed successfully, good luck in battle!");
-		} else {
-			// Unoccupied
-			to.setDef(leaving);
-			System.out.println("Units were placed successfully, " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + " is yours!");
+			// Split the unit using the input values
+			Army leaving = from.getDef().split(temp[0], temp[1], temp[2], temp[3]);
+			
+			// Links new split unit to player
+			p.addTerr(to);
 
-			// Check if a crown
-			if (to.hasCrown()) {
-				// Give crown and money
-				p.addCrowns(1);
-				p.addMoney(to.getValue());
+			// Move new unit
+			if (to.getDef() != null) {
+				// Occupied
+				to.setAtk(leaving);
+				System.out.println("Units were placed successfully, good luck in battle!");
+			} else {
+				// Unoccupied
+				to.setDef(leaving);
+				System.out.println("Units were placed successfully, " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + " is yours!");
 
-				System.out.println("Since this is a city you gain an additional crown and collect " + to.getValue() + " coins!");
+				// Check if a crown
+				if (to.hasCrown()) {
+					// Give crown and money
+					p.addCrowns(1);
+					p.addMoney(to.getValue());
+
+					System.out.println("Since this is a city you gain an additional crown and collect " + to.getValue() + " coins!");
+				}
 			}
+
+			// In case the loop repeats, set "to" equal to splitTo
+			// This would have no effect if the loop did not repeat.
+			to = splitTo;
+			getConfirmation();
 		}
-		getConfirmation();
 	}
 
 	// Move units from a non-disputed territory into another territory you own
@@ -812,10 +856,6 @@ public class Game {
 
 		System.out.println("Transaction complete!");
 		getConfirmation();
-	}
-
-	private void splitExpand(Player p) {
-
 	}
 
 	// Adds three footsoldiers on city, four on castle
