@@ -23,6 +23,7 @@
 import java.util.Scanner;
 import java.util.Random;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.InputMismatchException;
 
 public class Game {
@@ -479,38 +480,8 @@ public class Game {
 				}
 			}
 
+			// Get user input
 			System.out.print("\nChoose a destination or type 'retry' to start over: ");
-
-			// // Get user input 
-			// boolean val = false;
-			// while (!val) {
-			// 	input = getStringInput();
-
-			// 	// Checks for retry
-			// 	if (input.equalsIgnoreCase("retry")) {
-			// 		// Exits loop prematurely preventing isFinal from being set
-			// 		break;
-			// 	}
-
-			// 	to = brd.getTerritory(input);
-
-			// 	// Checks if the chosen territory is valid
-			// 	for (int i = 0; i < fromAdj.length; i++) {
-			// 		if (fromAdj[i] != null && fromAdj[i].equals(to)) {
-			// 			val = true;
-			// 		}
-			// 	}
-
-			// 	// Prints 
-			// 	if (to == null) {
-			// 		System.out.print("Territory does not exist: ");
-			// 	} else if (!val) {
-			// 		System.out.print("Invalid: ");
-			// 	} else {
-			// 		// Runs right before exiting loop
-			// 		isFinal = true;
-			// 	}
-			// }
 
 			Territory temp;
 			to = splitTo = null;
@@ -519,11 +490,13 @@ public class Game {
 				input = getStringInput();
 
 				if (input.equalsIgnoreCase("retry")) {
+					// Exits loop prematurely preventing isFinal from being set
 					break;
 				}
 
 				temp = brd.getTerritory(input);
 
+				// Checks if the chosen territory is valid
 				for (int i = 0; i < fromAdj.length; i++) {
 					if (fromAdj[i] != null && fromAdj[i].equals(temp)) {
 						if (isSplit && splitTo == null) {
@@ -535,6 +508,7 @@ public class Game {
 					}
 				}
 
+				// Prints text again if needed
 				if (temp == null) {
 					System.out.print("Territory does not exist: ");
 				} else if (isSplit && splitTo == null) {
@@ -544,6 +518,7 @@ public class Game {
 				} else if (!isSplit && to == null) {
 					System.out.print("Invalid: ");
 				} else {
+					// Runs right before exiting loop
 					isFinal = true;
 				}
 			}
@@ -914,18 +889,77 @@ public class Game {
 
 	// Attack an adjacent enemy territory, both territories must not be disputed
 	private void siegeAssault(Player p) {
-		//clearScreen();
-		//System.out.println("Siege Assault:");
+		clearScreen();
+		System.out.println("Siege Assault:");
 
-		// There are no siege weapons
-		//if (p.getTotalSiege() == 0) {
-		//	System.out.println("\nYou must have a siege weapon to perform this!");
-		//	getConfirmation();
-		//	return;
-		//}
+		// Player has no siege weapons
+		if (p.getTotalSiege() == 0) {
+			System.out.println("\nYou must have a siege weapon to perform this!");
+			getConfirmation();
+			return;
+		}
 
 		// Display possible targets
 		// There must be a siege weapon adjacent to an undisputed owned territory from another player 
+		System.out.println("Siege Options:");
+
+		Territory[] owned = p.getTerritories();
+		HashMap<Territory, Territory> validTerritories = new HashMap<Territory, Territory>();
+
+		for (int i = 0; i < owned.length; i++) {
+			if (!owned[i].isDisputed() && owned[i].getDef().getSiege() > 0) {
+				// Territory is not disputed and has siege weapon, valid
+				// Check if the territory has a non-disputed adjacent territory owned by another player
+				Territory[] adj = owned[i].getConnections();
+				
+				for (int j = 0; j < adj.length; j++) {
+					if (!adj[j].isDisputed() && !p.isOn(adj[j]) && adj[j].getDef() != null) {
+						// Add to hashmap
+						validTerritories.put(owned[i], adj[j]);
+
+						// Display information
+						System.out.print("From: ");
+						owned[i].display();
+						System.out.print("To: ");
+						adj[j].display();
+						System.out.println();
+					}
+				}
+			}
+		}
+
+		// Check if there was nothing added, exit if so
+		if (validTerritories.isEmpty()) {
+			System.out.println("\nYou have no siege weapons positioned to fire at an enemy!");
+			getConfirmation();
+			return;
+		}
+
+		// Get input
+		Territory from;
+		boolean valid = false;
+
+		System.out.print("Choose a territory to fire from: ");
+		while (!valid) {
+			from = brd.getTerritory(getStringInput());
+
+			// Check if contained
+			if (validTerritories.containsKey(from)) {
+				valid = true;
+			} else if (from == null) {
+				System.out.print("Territory does not exist: ");
+			} else {
+				System.out.print("Invalid: ");
+			}
+		}
+
+		// Roll two dice for each siege weapon and count hits
+		/*
+			WIP
+			Waiting until dispute resolution is implemented as this will
+			use a helper method from it.
+		*/
+
 	}
 
 	// Clear output

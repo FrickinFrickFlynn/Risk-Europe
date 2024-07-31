@@ -229,8 +229,7 @@ public class Player {
 		Getters
 	*/
 	public Territory[] getTerritories() {
-		// Gets the territories from the hashmap as a set
-		// Returns a new array that is ok to change
+		// Returns a copy of the array that is ok to change
 		return occupiedTerritories.toArray(new Territory[1]);
 	}
 
