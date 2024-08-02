@@ -67,6 +67,9 @@ public class Army {
 	*/
 	public void destroyUnits(int hits) {
 		if (hits >= unitTotal) {
+			//Modify total unit count first
+			owner.addTotalUnits(-units[0], -units[1], -units[2], -units[3]);
+
 			//Sets units to 0
 			for (int i = 0; i < 4; i++) {
 				units[i] = 0;
@@ -81,12 +84,16 @@ public class Army {
 				//Remove X unit if there are any
 				if (units[0] != 0) {
 					units[0]--;
+					owner.addTotalUnits(-1,0,0,0);
 				} else if (units[1] != 0) {
 					units[1]--;
+					owner.addTotalUnits(0,-1,0,0);
 				} else if (units[2] != 0) {
 					units[2]--;
+					owner.addTotalUnits(0,0,-1,0);
 				} else {
 					units[3]--;
+					owner.addTotalUnits(0,0,0,-1);
 				}
 				
 				hits--;

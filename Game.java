@@ -116,7 +116,7 @@ public class Game {
 			// Resolve disputes
 
 			// Check for win
-			gameOver = true;
+			gameOver = false;
 		}
 	}
 
@@ -901,10 +901,10 @@ public class Game {
 
 		// Display possible targets
 		// There must be a siege weapon adjacent to an undisputed owned territory from another player 
-		System.out.println("Siege Options:");
+		System.out.println("\nSiege Options:");
 
 		Territory[] owned = p.getTerritories();
-		HashMap<Territory, Territory> validTerritories = new HashMap<Territory, Territory>();
+		ArrayList<Territory> validTerritories = new ArrayList<Territory>();
 
 		for (int i = 0; i < owned.length; i++) {
 			if (!owned[i].isDisputed() && owned[i].getDef().getSiege() > 0) {
@@ -914,8 +914,9 @@ public class Game {
 				
 				for (int j = 0; j < adj.length; j++) {
 					if (!adj[j].isDisputed() && !p.isOn(adj[j]) && adj[j].getDef() != null) {
-						// Add to hashmap
-						validTerritories.put(owned[i], adj[j]);
+						// Add to list
+						validTerritories.add(owned[i]);
+						validTerritories.add(adj[j]);
 
 						// Display information
 						System.out.print("From: ");
@@ -936,7 +937,7 @@ public class Game {
 		}
 
 		// Get input
-		Territory from;
+		Territory from = null, to = null;
 		boolean valid = false;
 
 		System.out.print("Choose a territory to fire from: ");
@@ -944,8 +945,28 @@ public class Game {
 			from = brd.getTerritory(getStringInput());
 
 			// Check if contained
-			if (validTerritories.containsKey(from)) {
-				valid = true;
+			if (validTerritories.contains(from)) {
+				if (p.isDefending(from)) {
+					valid = true;
+				} else {
+					// Is contained in the list, but a target was chosen
+					System.out.print("Choose a territory you own: ");
+				}
+			} else if (from == null) {
+				System.out.print("Territory does not exist: ");
+			} else {
+				System.out.print("Invalid: ");
+			}
+		}
+
+		valid = false;
+		System.out.print("\nNow choose a territory to fire at: ");
+		while (!valid) {
+			to = brd.getTerritory(getStringInput());
+
+			// Check if adjacent to from, occupied, and not disputed
+			if (validTerritories.contains(to) && !p.isOn(to) && from.isAdjacent(to)) {
+				valid =true;
 			} else if (from == null) {
 				System.out.print("Territory does not exist: ");
 			} else {
@@ -954,12 +975,29 @@ public class Game {
 		}
 
 		// Roll two dice for each siege weapon and count hits
-		/*
-			WIP
-			Waiting until dispute resolution is implemented as this will
-			use a helper method from it.
-		*/
+		int hits = 0;
 
+		for (int i = 0; i < from.getDef().getSiege() * 2; i++) {
+			if ((rng.nextInt(6) + 1) >= 3) {
+				hits++;
+			}
+		}
+
+		// Removes the units from target
+		to.getDef().destroyUnits(hits);
+
+		// Display results
+		clearScreen();
+
+		if (hits >= 2) {
+			System.out.println("Wow! Your siege assault wrecked " + hits + " of the enemy's units!");
+		} else if (hits == 1) {
+			System.out.println("Your siege assault destroyed one enemy unit!");
+		} else {
+			System.out.println("Unfortunately, your siege weapons missed!");
+		}
+
+		getConfirmation();
 	}
 
 	// Clear output
