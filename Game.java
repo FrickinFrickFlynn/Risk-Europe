@@ -23,7 +23,6 @@
 import java.util.Scanner;
 import java.util.Random;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.InputMismatchException;
 
 public class Game {
@@ -114,6 +113,7 @@ public class Game {
 			}
 
 			// Resolve disputes
+			resolveDisputes();
 
 			// Check for win
 			gameOver = false;
@@ -251,7 +251,6 @@ public class Game {
 		Takes a turn for the given player.
 		Turns involve choosing an action from the activecard and then playing it
 	*/
-	
 	private void takeTurn(Player p) {
 		int card = p.useCard();
 
@@ -319,6 +318,46 @@ public class Game {
 
 			expand(p, true, false);
 		}
+	}
+
+	/*
+		Initiates a battle for each disputed territory
+		Sets owner of territory after battle
+	*/
+	private void resolveDisputes() {
+		clearScreen();
+
+		Territory[] terrs = brd.getTerritories();
+		Boolean noBattles = true;
+
+		for (int i = 0; i < terrs.length; i++) {
+			if (terrs[i].isDisputed()) {
+				if (noBattles) noBattles = false;
+
+				// Perform battle
+				Battle btl = new Battle(terrs[i]);
+				Army winner = btl.startBattle();
+
+				// Assign winner as the new owner
+				if (terrs[i].getDef() == winner) {
+					// Remove attacking unit
+					terrs[i].setAtk(null);
+				} else {
+					// Overwrite defender ref, remove old attacker ref
+					terrs[i].setDef(terrs[i].getAtk());
+					terrs[i].setAtk(null);
+				}
+
+				clearScreen();
+			}
+		}
+
+		if (noBattles) {
+			System.out.println("There were no disputed territories, may the world remain at peace.");
+		} else {
+			System.out.println("May the victors be gracious as the losers may strike again.");
+		}
+		getConfirmation();
 	}
 
 	// Returns the name of the card
