@@ -29,11 +29,11 @@ public class Battle {
 		}
 
 		//Sort array in descending order
-		int largest = 0;
+		for (int i = 0; i < results.length-1; i++) {
+			int largest = i;
 
-		for (int i = 0; i < results.length; i++) {
-			for (int j = i; j < results.length; j++) {
-				if (results[j] > largest) {
+			for (int j = i+1; j < results.length; j++) {
+				if (results[j] > results[largest]) {
 					largest = j;
 				}
 			}
@@ -56,7 +56,10 @@ public class Battle {
 		//Compare the dice, defense wins ties
 		int[] hits = new int[2];
 
-		for (int i = 0; i < defDice.length; i++) {
+		//Find bound
+		int limit = (defDice.length > attDice.length) ? attDice.length : defDice.length;
+
+		for (int i = 0; i < limit; i++) {
 			if (defDice[i] >= attDice[i]) {
 				//Defense wins
 				hits[1]++;
@@ -70,17 +73,34 @@ public class Battle {
 	}
 
 	//Returns the number of hits based on the number of rolls and the number a hit is based on
-	private int countHits(int dice, int hitOn) {
-		int[] rolls = rollDice(dice);
+	private int countHits(int[] dice, int hitOn) {
 		int hits = 0;
 
-		for (int i = 0; i < dice; i++) {
-			if (rolls[i] >= hitOn) {
+		for (int i = 0; i < dice.length; i++) {
+			if (dice[i] >= hitOn) {
 				hits++;
 			}
 		}
 
 		return hits;
+	}
+
+	private void clearScreen() {
+		System.out.print("\033[H\033[2J");
+	}
+
+	private String displayDice(int[] dice) {
+		String out = "[";
+
+		for (int i = 0; i < dice.length; i++) {
+			if (i != 0) {
+				out += ", ";
+			}
+
+			out += dice[i];
+		}
+
+		return out + "]";
 	}
 
 	public Army startBattle() {
@@ -92,7 +112,7 @@ public class Battle {
 		//Pad out the console
 		System.out.println("The battle will commence.\nPress ENTER to continue...");
 		sc.nextLine();
-		System.out.println();
+		clearScreen();
 
 		//Battle Loop
 		int turn = 1, rank = 1;
@@ -104,60 +124,101 @@ public class Battle {
 			defHits = 0;
 
 			//Display turn, rank, and army standings
-			System.out.println("Turn: " + Integer.toString(turn) + "  Rank: " + Integer.toString(rank));
-			System.out.println("Attacking Army: " + attacker);
-			System.out.println("Defending Army: " + defender + "\n");
+			System.out.println("Turn: " + turn);
+			System.out.println("(A) " + attacker.getOwner().getName() + "'s Army: " + attacker);
+			System.out.println("(D) " + defender.getOwner().getName() + "'s Army: " + defender + "\n");
 
-			if (rank == 1) {
+			if (rank == 1 && (attacker.getSiege() > 0 || defender.getSiege() > 0)) {
 				//Siege Attack
-				if (attacker.getSiege() != 0) {
-					attHits = countHits(2 * attacker.getSiege(), 3);
+				System.out.println("Siege Bombardment");
+
+				int attSiege = attacker.getSiege();
+				int defSiege = defender.getSiege();
+
+				if (attSiege != 0) {
+					int[] attDice = rollDice(2 * attSiege);
+					attHits = countHits(attDice, 3);
+
+					System.out.println("Att: " + displayDice(attDice));
+					System.out.println("With " + attSiege + " siege unit" + (attSiege > 1 ? "s" : "") + " the attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
 				}
-				if (defender.getSiege() != 0) {
-					defHits = countHits(2 * defender.getSiege(), 3);
+				if (defSiege != 0) {
+					int[] defDice = rollDice(2 * defSiege);
+					defHits = countHits(defDice, 3);
+
+					System.out.println("Def: " + displayDice(defDice));
+					System.out.println("With " + defSiege + " siege unit" + (defSiege > 1 ? "s" : "") + " the defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".");
 				}
 
-				//Increment rank
-				rank++;
+				//Cycle rank
+				rank = 2;
 
-				//Display results
-				System.out.println("With " + Integer.toString(attacker.getSiege()) + " siege unit(s) the attacker scored " + Integer.toString(attHits) + " hit(s).");
-				System.out.println("With " + Integer.toString(defender.getSiege()) + " siege unit(s) the defender scored " + Integer.toString(defHits) + " hit(s).\n");
+				System.out.println("\nPress ENTER to continue...");
+				sc.nextLine();
+				clearScreen();
 
-			} else if (rank == 2) {
+			} else if (rank == 2 && (attacker.getArcher() > 0 || defender.getArcher() > 0)) {
 				//Archer Attack
-				if (attacker.getArcher() != 0) {
-					attHits = countHits(attacker.getArcher(), 5);
+				System.out.println("Archer Volley");
+
+				int attArch = attacker.getArcher();
+				int defArch = defender.getArcher();
+
+				if (attArch != 0) {
+					int[] attDice = rollDice(attArch);
+					attHits = countHits(attDice, 5);
+
+					System.out.println("Att: " + displayDice(attDice));
+					System.out.println("With " + attArch + " archer" + (attArch > 1 ? "s" : "") + " the attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
 				}
-				if (defender.getArcher() != 0) {
-					defHits = countHits(defender.getArcher(), 5);
+				if (defArch != 0) {
+					int[] defDice = rollDice(defArch);
+					defHits = countHits(defDice, 5);
+
+					System.out.println("Def: " + displayDice(defDice));
+					System.out.println("With " + defArch + " archer" + (defArch > 1 ? "s" : "") + " the defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".");
 				}
 
-				//Increment rank
-				rank++;
+				//Cycle rank
+				rank = 3;
 
-				//Display Results
-				System.out.println("With " + Integer.toString(attacker.getArcher()) + " archer unit(s) the attacker scored " + Integer.toString(attHits) + " hit(s).");
-				System.out.println("With " + Integer.toString(defender.getArcher()) + " archer unit(s) the defender scored " + Integer.toString(defHits) + " hit(s).\n");
+				System.out.println("\nPress ENTER to continue...");
+				sc.nextLine();
+				clearScreen();
 
-			} else if (rank == 3) {
+			} else if (rank == 3 && (attacker.getCavalry() > 0 || defender.getCavalry() > 0)) {
 				//Cavalry Attack
-				if (attacker.getArcher() != 0) {
-					attHits = countHits(attacker.getCavalry(), 3);
+				System.out.println("Cavalry Assault");
+
+				int attCav = attacker.getCavalry();
+				int defCav = attacker.getCavalry();
+
+				if (attCav != 0) {
+					int[] attDice = rollDice(attCav);
+					attHits = countHits(attDice, 3);
+
+					System.out.println("Att: " + displayDice(attDice));
+					System.out.println("With " + attCav + " cavalr" + (attCav > 1 ? "ies" : "y") + " the attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
 				}
-				if (defender.getArcher() != 0) {
-					defHits = countHits(defender.getCavalry(), 3);
+				if (defCav != 0) {
+					int[] defDice = rollDice(defCav);
+					defHits = countHits(defDice, 3);
+
+					System.out.println("Def: " + displayDice(defDice));
+					System.out.println("With " + defCav + " cavalr" + (defCav > 1 ? "ies" : "y") + " the defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".");
 				}
 
-				//Increment rank
-				rank++;
+				//Cycle rank
+				rank = 4;
 
-				//Display Results
-				System.out.println("With " + Integer.toString(attacker.getCavalry()) + " cavalry unit(s) the attacker scored " + Integer.toString(attHits) + " hit(s).");
-				System.out.println("With " + Integer.toString(defender.getCavalry()) + " cavalry unit(s) the defender scored " + Integer.toString(defHits) + " hit(s).\n");
+				System.out.println("\nPress ENTER to continue...");
+				sc.nextLine();
+				clearScreen();
 
 			} else {
 				//General Attack
+				System.out.println("General Attack");
+
 				int[] attDice, defDice;
 
 				if (attacker.getTotal() < 3) {
@@ -177,18 +238,29 @@ public class Battle {
 				defHits = hits[1];
 
 				//Display Results
-				System.out.println("The attacker scored " + Integer.toString(attHits) + " hit(s).");
-				System.out.println("The defender scored " + Integer.toString(defHits) + " hit(s).\n");
+				System.out.println("Att: " + displayDice(attDice));
+				System.out.println("Def: " + displayDice(defDice) + "\n");
 
-				//Reset rank and increment turn
-				turn++;
+				if (attHits > 0) {
+					System.out.println("The attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
+				} else {
+					System.out.println("The attacker scored no hits!");
+				}
+
+				if (defHits > 0) {
+					System.out.println("The defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".\n");
+				} else {
+					System.out.println("The defenders scored no hits!\n");
+				}
+				
+				//Cycle rank
 				rank = 1;
-			}
+				turn++;
 
-			//Wait before continuing forwards
-			System.out.println("Press enter to continue to Rank " + Integer.toString(rank) + ": ");
-			sc.nextLine();
-			System.out.println("\n\n");
+				System.out.println("Press ENTER to continue...");
+				sc.nextLine();
+				clearScreen();
+			}
 
 			//Remove units based on other army's hits
 			attacker.destroyUnits(defHits);
@@ -207,17 +279,17 @@ public class Battle {
 		System.out.println("The winner is the " + winner + " army!");
 
 		//Compare intial values
-		System.out.println("Initial Values: Attacking - " + Integer.toString(attInit) + " , Defending - " + Integer.toString(defInit));
+		System.out.println("\nInitial Values:\n  Attacking - " + attInit + "\n  Defending - " + defInit);
 		System.out.println();
 
 		//Value Lost
 		int attValLost = attInit - attacker.totalValue();
 		int defValLost = defInit - defender.totalValue();
 
-		System.out.println("The attacking army lost a value of " + Integer.toString(attValLost) + " coins.");
-		System.out.println("The defending army lost a value of " + Integer.toString(defValLost) + " coins.");
+		System.out.println("The attacking army lost a value of " + attValLost + " coins.");
+		System.out.println("The defending army lost a value of " + defValLost + " coins.");
 
-		System.out.println("Press ENTER to continue...");
+		System.out.println("\nPress ENTER to continue...");
 		sc.nextLine();
 
 		return (attacker.getTotal() == 0) ? defender : attacker;
