@@ -1,6 +1,6 @@
 /*
 	Represents a player
-	Holds important player stats (money, faction, crowns, totalActiveUnits, cards)
+	Holds important player stats (money, faction, totalActiveUnits, cards)
 	Active units keeps track of what units the player has on the board
 		- Used to keep track of total and maintain unit limits
 
@@ -18,7 +18,6 @@ public class Player {
 	private String name;
 	private String faction;
 	private int money;
-	private int crowns;
 
 	private int[] totalActiveUnits; 				// [foot, arch, cav, siege]
 	private ArrayList<Territory> occupiedTerritories; 
@@ -31,10 +30,9 @@ public class Player {
 	/*
 		Constructors
 	*/
-	public Player(String name, String faction, int money, int crowns) {
+	public Player(String name, String faction, int money) {
 		this(name, faction);
 		this.money = money;
-		this.crowns = crowns;
 	}
 
 	public Player(String name, String faction) {
@@ -164,13 +162,6 @@ public class Player {
 	}
 
 	/*
-		Easy adjustment of crown count
-	*/
-	public void addCrowns(int crowns) {
-		this.crowns += crowns;
-	}
-
-	/*
 		Allows for easy adjustment of unit counts
 	*/
 	public void addTotalUnits(int foot, int arch, int cav, int siege) {
@@ -195,16 +186,19 @@ public class Player {
 		occupiedTerritories.add(terr);
 	}
 
+	// Removes a territory from the player
+	public void removeTerr(Territory terr) {
+		occupiedTerritories.remove(terr);
+	}
+
 	// Returns an array of the supply chain starting from a territory
 	public Territory[] getSupplyChain(Territory start) {
 		Territory[] occupied = getTerritories();
 		ArrayList<Territory> chain = new ArrayList<Territory>();
 
 		// Check if the starting territory is owned
-		boolean isOwn = isOn(start);
-
 		// Also check if it is disputed
-		if (!isOwn || start.isDisputed()) return null;
+		if (!isOn(start) || start.isDisputed()) return null;
 
 		chainRecursion(start, chain, occupied);
 
@@ -245,7 +239,15 @@ public class Player {
 		return money;
 	}
 
-	public int getCrown() {
+	public int getCrowns() {
+		int crowns = 0;
+
+		for (Territory t : occupiedTerritories) {
+			if (t.hasCrown() && isDefending(t)) {
+				crowns++;
+			}
+		}
+
 		return crowns;
 	}
 
@@ -280,10 +282,6 @@ public class Player {
 		this.money = money;
 	}
 
-	public void setCrowns(int crowns) {
-		this.crowns = crowns;
-	}
-
 	public void setFoot(int foot) {
 		totalActiveUnits[0] = foot;
 	}
@@ -305,7 +303,7 @@ public class Player {
 	*/
 	public String toString() {
 		String out = "Player: " + name + "\n";
-		out += faction + " $" + money + " Cr: " + crowns + "\n";
+		out += faction + " $" + money + " Cr: " + getCrowns() + "\n";
 		out += "Units: \n" + "Foot - " + totalActiveUnits[0] + "\nArch - " + totalActiveUnits[1]; 
 		out += "\nCav - " + totalActiveUnits[2] + "\nSiege - " + totalActiveUnits[3] + "\n";
 

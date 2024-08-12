@@ -95,6 +95,29 @@ public class Territory {
 	}
 
 	/*
+		Removes defending unit and replaces it with the attacker if there is one
+		Otherwise makes the territory unclaimed
+	*/
+	public void removeDef() {
+		def.getOwner().removeTerr(this);
+
+		if (atk != null) {
+			def = atk;
+			atk = null;
+		} else {
+			def = null;
+		}
+	}
+
+	/*
+		Removes attacker
+	*/
+	public void removeAtk() {
+		atk.getOwner().removeTerr(this);
+		atk = null;
+	}
+
+	/*
 		TerritoryName(crown preferred) - Def:(f, a, c, s) - Atk:(f, a, c, s) - Castle: Yes
 	*/
 	public void display() {
@@ -228,6 +251,10 @@ public class Territory {
 
 	public String getCrownName() {
 		return crownName;
+	}
+
+	public String getPrefName() {
+		return (crown ? crownName : name);
 	}
 
 	/*

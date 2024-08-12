@@ -77,7 +77,7 @@ public class Game {
 		// Create new player objects from their name, give them starting equipment
 		players = new Player[playerNames.length];
 		for (int i = 0; i < playerNames.length; i++) {
-			players[i] = new Player(playerNames[i], "ffa", startAmt, 0);
+			players[i] = new Player(playerNames[i], "ffa", startAmt);
 			players[i].giveCards(cardPool);
 		}
 
@@ -307,7 +307,6 @@ public class Game {
 			totalCastles++;
 
 			p.addTerr(chosenTerritory);
-			p.addCrowns(1);
 			p.addMoney(chosenTerritory.getValue());
 			p.addTotalUnits(stArmyCnt[0], stArmyCnt[1], stArmyCnt[2], stArmyCnt[3]);
 
@@ -328,34 +327,39 @@ public class Game {
 		clearScreen();
 
 		Territory[] terrs = brd.getTerritories();
-		Boolean noBattles = true;
+		int battleCount = 0;
 
 		for (int i = 0; i < terrs.length; i++) {
 			if (terrs[i].isDisputed()) {
-				if (noBattles) noBattles = false;
+
+				// Display battle info
+				System.out.println("Battle #" + (++battleCount));
 
 				// Perform battle
 				Battle btl = new Battle(terrs[i]);
 				Army winner = btl.startBattle();
 
 				// Assign winner as the new owner
-				if (terrs[i].getDef() == winner) {
+				if (winner == null) {
+					// Nobody wins, territory unclaimed
+					terrs[i].removeAtk();
+					terrs[i].removeDef();
+				} else if (terrs[i].getDef() == winner) {
 					// Remove attacking unit
-					terrs[i].setAtk(null);
+					terrs[i].removeAtk();
 				} else {
 					// Overwrite defender ref, remove old attacker ref
-					terrs[i].setDef(terrs[i].getAtk());
-					terrs[i].setAtk(null);
+					terrs[i].removeDef();
 				}
 
 				clearScreen();
 			}
 		}
 
-		if (noBattles) {
+		if (battleCount == 0) {
 			System.out.println("There were no disputed territories, may the world remain at peace.");
 		} else {
-			System.out.println("May the victors be gracious as the losers may strike again.");
+			System.out.println("May the lands be at peace after settling such violent disputes.");
 		}
 		getConfirmation();
 	}
@@ -442,7 +446,9 @@ public class Game {
 				int totalValue = 0;
 
 				for (int j = 0; j < supplyChain.length; j++) {
-					totalValue += supplyChain[j].getValue();
+					if (supplyChain != null) {
+						totalValue += supplyChain[j].getValue();
+					}
 				}
 
 				if (totalValue > largest) {
@@ -567,7 +573,7 @@ public class Game {
 		int bound = isSplit ? 2 : 1;
 
 		for (int i = 0; i < bound; i++) {
-			int[] temp = getUnitInput(from, to);
+			int[] temp = getUnitInput(from, to, bound);
 			clearScreen();
 
 			// Split the unit using the input values
@@ -584,12 +590,11 @@ public class Game {
 			} else {
 				// Unoccupied
 				to.setDef(leaving);
-				System.out.println("Units were placed successfully, " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + " is yours!");
+				System.out.println("Units were placed successfully, " + to.getPrefName() + " is yours!");
 
 				// Check if a crown
 				if (to.hasCrown()) {
 					// Give crown and money
-					p.addCrowns(1);
 					p.addMoney(to.getValue());
 
 					System.out.println("Since this is a city you gain an additional crown and collect " + to.getValue() + " coins!");
@@ -700,7 +705,7 @@ public class Game {
 		}
 
 		// Get number of units to send
-		int[] temp = getUnitInput(from, to);
+		int[] temp = getUnitInput(from, to, 1);
 		clearScreen();
 
 		// Moves units over
@@ -728,10 +733,10 @@ public class Game {
 		String input;
 		Territory selectedTerr;
 
-		clearScreen();
-		System.out.println("Spend:");
-
 		while (stillSpending) {
+			clearScreen();
+			System.out.println("Spend:");
+
 			// Determine the number of recruitable units
 			deployable[0] = maxUnits[0] - p.getTotalFoot();
 			deployable[1] = maxUnits[1] - p.getTotalArch();
@@ -830,11 +835,11 @@ public class Game {
 			// Determine if the user is alright with these units
 			clearScreen();
 
-			System.out.println("Units being deployed at " + (selectedTerr.hasCrown() ? selectedTerr.getCrownName() :  selectedTerr.getName()) + ": ");
+			System.out.println("Units being deployed at " + selectedTerr.getPrefName() + ": ");
 			System.out.println("Footmen: " + sending[0] + " | Archers: " + sending[1] + " | Cavalry: " + sending[2] + " | Siege: " + sending[3]);
 
 			if (installCastle) {
-				System.out.println("\nA castle will be placed on " + (selectedTerr.hasCrown() ? selectedTerr.getCrownName() :  selectedTerr.getName()));
+				System.out.println("\nA castle will be placed on " + selectedTerr.getPrefName());
 			}
 
 			System.out.print("\nConfirm unit placement (1 or 0): ");
@@ -922,7 +927,7 @@ public class Game {
 		p.addTotalUnits(numOfUnits,0,0,0);
 
 		clearScreen();
-		System.out.println(numOfUnits + " footsoldiers were added to " + (chosen.hasCrown() ? chosen.getCrownName() : chosen.getName()) + "!");
+		System.out.println(numOfUnits + " footsoldiers were added to " + chosen.getPrefName() + "!");
 		getConfirmation();
 	}
 
@@ -1013,20 +1018,37 @@ public class Game {
 			}
 		}
 
-		// Roll two dice for each siege weapon and count hits
-		int hits = 0;
+		// Display results
+		clearScreen();
 
+		// Roll two dice for each siege weapon and count hits
+		System.out.print("Roll: [");
+
+		int hits = 0;
 		for (int i = 0; i < from.getDef().getSiege() * 2; i++) {
-			if ((rng.nextInt(6) + 1) >= 3) {
+			int roll = rng.nextInt(6) + 1;
+			
+			if (i == 0) {
+				System.out.print("" + roll);
+			} else {
+				System.out.print(", " + roll);
+			}
+
+			if (roll >= 3) {
 				hits++;
 			}
 		}
 
+		System.out.println("]");
+
 		// Removes the units from target
 		to.getDef().destroyUnits(hits);
 
-		// Display results
-		clearScreen();
+		if (to.getDef().totalValue() == 0) {
+			to.removeDef();
+
+			System.out.println("Egads! The entire army was eliminated!");
+		}
 
 		if (hits >= 2) {
 			System.out.println("Wow! Your siege assault wrecked " + hits + " of the enemy's units!");
@@ -1119,7 +1141,7 @@ public class Game {
 	}
 
 	// Gets the number of units to send from the player
-	private int[] getUnitInput(Territory from, Territory to) {
+	private int[] getUnitInput(Territory from, Territory to, int minUnits) {
 		int ft, ar, cv, sg;
 		Army fromUnit = from.getDef();
 
@@ -1127,10 +1149,10 @@ public class Game {
 			clearScreen();
 
 			// Display the army that will split
-			System.out.println("\nUnits stationed in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
+			System.out.println("\nUnits stationed in " + from.getPrefName() + ": ");
 			System.out.println("Footmen: " + fromUnit.getFoot() + " | Archers: " + fromUnit.getArcher() + " | Cavalry: " 
 				+ fromUnit.getCavalry() + " | Siege: " + fromUnit.getSiege());
-			System.out.println("\nType the number of units that will move to " + (to.hasCrown() ? to.getCrownName() : to.getName()) + ": ");
+			System.out.println("\nType the number of units that will move to " + to.getPrefName() + ": ");
 
 			// Get input from player
 			ft = ar = cv = sg = 0;
@@ -1171,8 +1193,8 @@ public class Game {
 					getConfirmation();
 					clearScreen();
 					continue;
-				} else if (remaining == 0) {
-					System.out.println("\nAt least one unit must remain, try again.");
+				} else if (remaining < minUnits) {
+					System.out.println("\nAt least " + minUnits + " unit" + (minUnits > 1 ? "s" : "") + " must remain, try again.");
 					getConfirmation();
 					clearScreen();
 					continue;
@@ -1182,20 +1204,20 @@ public class Game {
 			clearScreen();
 
 			// Checks if the player is satisfied
-			System.out.println("Units staying in " + (from.hasCrown() ? from.getCrownName() :  from.getName()) + ": ");
+			System.out.println("Units staying in " + from.getPrefName() + ": ");
 			System.out.println("Footmen: " + (fromUnit.getFoot()-ft) + " | Archers: " + (fromUnit.getArcher()-ar) + " | Cavalry: " 
 				+ (fromUnit.getCavalry()-cv) + " | Siege: " + (fromUnit.getSiege()-sg));
 
-			System.out.println("\nUnits going to " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": ");
+			System.out.println("\nUnits going to " + to.getPrefName() + ": ");
 			System.out.println("Footmen: " + ft + " | Archers: " + ar + " | Cavalry: " + cv + " | Siege: " + sg);
 
 			if (to.getDef() != null) {
 				// There is a unit there
-				System.out.println("\nDefending Unit in " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": \n" + to.getDef());
+				System.out.println("\nDefending Unit in " + to.getPrefName() + ": \n" + to.getDef());
 			}
 
 			if (to.getAtk() != null) {
-				System.out.println("\nAttacking Unit in " + (to.hasCrown() ? to.getCrownName() :  to.getName()) + ": \n" + to.getAtk());
+				System.out.println("\nAttacking Unit in " + to.getPrefName() + ": \n" + to.getAtk());
 			}
 
 			System.out.print("\nConfirm unit placement (1 or 0): ");

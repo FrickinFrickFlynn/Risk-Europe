@@ -4,19 +4,26 @@ import java.util.Scanner;
 
 public class Battle {
 	//Used to "roll dice"
-	private Random rand = new Random();
+	private Random rand;
+	private Scanner sc;
 
-	private Territory disputedTerritory;
+	private Territory dispTerr;
 	private Army attacker;
 	private Army defender;
+
 	private boolean hasCastle;
+	private boolean canCastleDef;
 
 	//Constructor
-	public Battle(Territory disputedTerritory) {
-		this.disputedTerritory = disputedTerritory;
-		attacker = disputedTerritory.getAtk();
-		defender = disputedTerritory.getDef();
-		hasCastle = disputedTerritory.hasCastle();
+	public Battle(Territory dispTerr) {
+		this.dispTerr = dispTerr;
+		attacker = dispTerr.getAtk();
+		defender = dispTerr.getDef();
+		hasCastle = dispTerr.hasCastle();
+
+		rand = new Random();
+		sc = new Scanner(System.in);
+		canCastleDef = hasCastle;
 	}
 
 	//Returns an array of dice roll results in descending order
@@ -85,6 +92,7 @@ public class Battle {
 		return hits;
 	}
 
+	//Clears the terminal
 	private void clearScreen() {
 		try {
 			if (System.getProperty("os.name").contains("Windows")) {
@@ -95,6 +103,7 @@ public class Battle {
 		} catch (Exception e) {}
 	}
 
+	//Returns a string of dice nice
 	private String displayDice(int[] dice) {
 		String out = "[";
 
@@ -109,14 +118,50 @@ public class Battle {
 		return out + "]";
 	}
 
-	public Army startBattle() {
-		Scanner sc = new Scanner(System.in);
+	//Allows the defender to reroll
+	private int[] castleDefense(int numOfDice) {
+		System.out.print("\nThe defender can reroll, what is their choice (1or0)? ");
 
+		// Get input from user
+		do {
+			try {
+				int input = sc.nextInt();
+				
+				// Flush '\n'
+				sc.nextLine();
+
+				if (input == 0) {
+					// Do nothing
+					return null;
+				} else if (input == 1) {
+					// Continue as normal
+					break;
+				} else {
+					// Bad number
+					System.out.print("Type 1 or 0: ");
+				}
+			} catch (Exception e) {
+				System.out.print("Type an integer: ");
+			}
+		} while (true);
+
+		// Reroll and display results
+		int[] reroll = rollDice(numOfDice);
+		System.out.println("Def2: " + displayDice(reroll));
+
+		// Set state
+		canCastleDef = false;
+
+		return reroll;
+	}
+
+	public Army startBattle() {
 		//Holds the initial values of the armies
 		int attInit = attacker.totalValue(), defInit = defender.totalValue();
 
 		//Pad out the console
-		System.out.println("The battle will commence.\nPress ENTER to continue...");
+		System.out.println(dispTerr.getPrefName() + "\n" + attacker.getOwner().getName() + " vs. " + defender.getOwner().getName());
+		System.out.println("\nThe battle will commence!\nPress ENTER to continue...");
 		sc.nextLine();
 		clearScreen();
 
@@ -145,21 +190,26 @@ public class Battle {
 					int[] attDice = rollDice(2 * attSiege);
 					attHits = countHits(attDice, 3);
 
-					System.out.println("Att: " + displayDice(attDice));
-					System.out.println("With " + attSiege + " siege unit" + (attSiege > 1 ? "s" : "") + " the attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
+					System.out.println("\nAtt: " + displayDice(attDice));
+					System.out.println("With " + attSiege + " siege unit" + (attSiege > 1 ? "s" : "") + " the attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".\n");
 				}
 				if (defSiege != 0) {
 					int[] defDice = rollDice(2 * defSiege);
-					defHits = countHits(defDice, 3);
 
-					System.out.println("Def: " + displayDice(defDice));
+					System.out.println("\nDef: " + displayDice(defDice));
+					if (canCastleDef)  {
+						int[] reroll = castleDefense(defSiege);
+						if (reroll != null) defDice = reroll;
+					}
+
+					defHits = countHits(defDice, 3);
 					System.out.println("With " + defSiege + " siege unit" + (defSiege > 1 ? "s" : "") + " the defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".");
 				}
 
 				//Cycle rank
 				rank = 2;
 
-				System.out.println("\nPress ENTER to continue...");
+				System.out.println("Press ENTER to continue...");
 				sc.nextLine();
 				clearScreen();
 
@@ -174,14 +224,19 @@ public class Battle {
 					int[] attDice = rollDice(attArch);
 					attHits = countHits(attDice, 5);
 
-					System.out.println("Att: " + displayDice(attDice));
+					System.out.println("\nAtt: " + displayDice(attDice));
 					System.out.println("With " + attArch + " archer" + (attArch > 1 ? "s" : "") + " the attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
 				}
 				if (defArch != 0) {
 					int[] defDice = rollDice(defArch);
-					defHits = countHits(defDice, 5);
 
-					System.out.println("Def: " + displayDice(defDice));
+					System.out.println("\nDef: " + displayDice(defDice));
+					if (canCastleDef)  {
+						int[] reroll = castleDefense(defArch);
+						if (reroll != null) defDice = reroll;
+					}
+
+					defHits = countHits(defDice, 5);
 					System.out.println("With " + defArch + " archer" + (defArch > 1 ? "s" : "") + " the defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".");
 				}
 
@@ -203,21 +258,26 @@ public class Battle {
 					int[] attDice = rollDice(attCav);
 					attHits = countHits(attDice, 3);
 
-					System.out.println("Att: " + displayDice(attDice));
+					System.out.println("\nAtt: " + displayDice(attDice));
 					System.out.println("With " + attCav + " cavalr" + (attCav > 1 ? "ies" : "y") + " the attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
 				}
 				if (defCav != 0) {
 					int[] defDice = rollDice(defCav);
-					defHits = countHits(defDice, 3);
+	
+					System.out.println("\nDef: " + displayDice(defDice));
+					if (canCastleDef)  {
+						int[] reroll = castleDefense(defCav);
+						if (reroll != null) defDice = reroll;
+					}
 
-					System.out.println("Def: " + displayDice(defDice));
+					defHits = countHits(defDice, 3);
 					System.out.println("With " + defCav + " cavalr" + (defCav > 1 ? "ies" : "y") + " the defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".");
 				}
 
 				//Cycle rank
 				rank = 4;
 
-				System.out.println("\nPress ENTER to continue...");
+				System.out.print("\nPress ENTER to continue...");
 				sc.nextLine();
 				clearScreen();
 
@@ -239,31 +299,39 @@ public class Battle {
 					defDice = rollDice(2);
 				}
 
+				//Display Results
+				System.out.println("Att: " + displayDice(attDice));
+				System.out.println("Def: " + displayDice(defDice));
+				
+				if (canCastleDef)  {
+					int[] reroll = castleDefense(defDice.length);
+					if (reroll != null) defDice = reroll;
+				}
+
 				int[] hits = genAttack(attDice, defDice);
 				attHits = hits[0];
 				defHits = hits[1];
 
-				//Display Results
-				System.out.println("Att: " + displayDice(attDice));
-				System.out.println("Def: " + displayDice(defDice) + "\n");
-
 				if (attHits > 0) {
-					System.out.println("The attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
+					System.out.println("\nThe attacker scored " + attHits + " hit" + (attHits > 1 ? "s" : "") + ".");
 				} else {
-					System.out.println("The attacker scored no hits!");
+					System.out.println("\nThe attacker scored no hits!");
 				}
 
 				if (defHits > 0) {
-					System.out.println("The defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".\n");
+					System.out.println("The defender scored " + defHits + " hit" + (defHits > 1 ? "s" : "") + ".");
 				} else {
-					System.out.println("The defenders scored no hits!\n");
+					System.out.println("The defenders scored no hits!");
 				}
 				
 				//Cycle rank
 				rank = 1;
 				turn++;
 
-				System.out.println("Press ENTER to continue...");
+				//Change state
+				canCastleDef = hasCastle;
+
+				System.out.print("\nPress ENTER to continue...");
 				sc.nextLine();
 				clearScreen();
 			}
@@ -274,30 +342,29 @@ public class Battle {
 		}
 
 		//Display Winner
-		String winner;
+		Army winner = null;
 
-		if (attacker.getTotal() == 0) {
-			winner = "defending";
+		if (attacker.getTotal() == 0 && defender.getTotal() == 0) {
+			System.out.println("Both armies have defeated each other. The land is vacant!");
+		} else if (defender.getTotal() == 0) {
+			winner = attacker;
+			System.out.println("The attacking army siezes control of " + dispTerr.getPrefName() + "!");
 		} else {
-			winner = "attacking";
+			winner = defender;
+			System.out.println("The defending army stood their ground!");
 		}
 
-		System.out.println("The winner is the " + winner + " army!");
-
 		//Compare intial values
-		System.out.println("\nInitial Values:\n  Attacking - " + attInit + "\n  Defending - " + defInit);
-		System.out.println();
+		System.out.println("\nInitial Values:\n  Attacking - " + attInit + "\n  Defending - " + defInit + "\n");
 
 		//Value Lost
 		int attValLost = attInit - attacker.totalValue();
 		int defValLost = defInit - defender.totalValue();
 
-		System.out.println("The attacking army lost a value of " + attValLost + " coins.");
-		System.out.println("The defending army lost a value of " + defValLost + " coins.");
-
+		System.out.println("Unit Value Lost:\n Attacking - " + attValLost + "\n Defending - " + defValLost);
 		System.out.println("\nPress ENTER to continue...");
 		sc.nextLine();
 
-		return (attacker.getTotal() == 0) ? defender : attacker;
+		return winner;
 	}
 }
