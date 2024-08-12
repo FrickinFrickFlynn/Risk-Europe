@@ -86,7 +86,13 @@ public class Battle {
 	}
 
 	private void clearScreen() {
-		System.out.print("\033[H\033[2J");
+		try {
+			if (System.getProperty("os.name").contains("Windows")) {
+				new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+			} else {
+				System.out.print("\033[H\033[2J");
+			}
+		} catch (Exception e) {}
 	}
 
 	private String displayDice(int[] dice) {
