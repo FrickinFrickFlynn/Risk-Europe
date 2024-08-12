@@ -40,10 +40,12 @@ public class Game {
 	private int startAmt;					// Starting amount of money
 	private int[] maxUnits;					// Max units a player is allowed
 	private int turnsPerRound;				// Number of turns per round
+	private int roundCount;					// Tracks the round number
 	private int[] stArmyCnt;				// Starting unit count
 	private int maxCastles;					// Max number of castles allowed
 	private int totalCastles;				// Current number of castles
 	private int[] unitValue;				// What each unit is worth
+	private int winCrownCount;				// Amount of crowns to win
 
 	public Game(String[] playerNames, String boardPath, int[] cards) {
 		sc = new Scanner(System.in);
@@ -56,6 +58,7 @@ public class Game {
 			on implementing a way to handle custom game var values. 
 		*/
 		maxCastles = 8;
+		winCrownCount = 7;
 		startAmt = 5;
 		turnsPerRound = 2;
 		maxUnits = new int[4];
@@ -91,6 +94,7 @@ public class Game {
 		// Start only if ready
 		if (!ready) return;
 		gameOver = false;
+		roundCount = 0;
 
 		// Bidding sequence
 		bid();
@@ -99,13 +103,18 @@ public class Game {
 
 		// Main game loop
 		while (!gameOver) {
+			roundCount++;
+
+			// Display round start info
+			displayRoundInfo();
+
 			// Assign player order
 			assignOrder();
 
 			// Pick cards
 			pickingSequence();
 
-			// Turn1 & 2
+			// Turn 1 & 2
 			for (int i = 0; i < turnsPerRound; i++) {
 				for (int j = 0; j < players.length; j++) {
 					takeTurn(players[j]);
@@ -116,8 +125,37 @@ public class Game {
 			resolveDisputes();
 
 			// Check for win
-			gameOver = false;
+			checkForWin();
 		}
+	}
+
+	/*
+		Displays player information
+			Name CrownCount TerritoriesOwned ArmyValue
+	*/
+	private void displayRoundInfo() {
+		clearScreen();
+		System.out.println("Round #" + roundCount + "\n");
+
+		for (int i = 0; i < players.length; i++) {
+			Territory[] terrs = players[i].getTerritories();
+			int terrCount = 0;
+			int armyValue = 0;
+
+			for (int j = 0 ; j < terrs.length; j++) {
+				if (players[i].isDefending(terrs[j])) {
+					terrCount++;
+					armyValue += terrs[j].getDef().totalValue();
+				} else {
+					armyValue += terrs[j].getAtk().totalValue();
+				}
+			}
+			System.out.print(players[i].getName() + " | Crowns: " + players[i].getCrowns() + " | Territory Count: ");
+			System.out.println(terrCount + " | Army Value: " + armyValue);
+		}
+
+		System.out.println("\nThe round will begin.");
+		getConfirmation();
 	}
 
 	/*
@@ -362,6 +400,65 @@ public class Game {
 			System.out.println("May the lands be at peace after settling such violent disputes.");
 		}
 		getConfirmation();
+	}
+
+	/*
+		Checks for a winner
+	*/
+	private void checkForWin() {
+		clearScreen();
+		System.out.println("End of Round Results: ");
+		System.out.println("To Win: " + winCrownCount);
+		System.out.println("\nCrown Count: ");
+
+		// Keep track of ties and who has the highest count
+		ArrayList<Player> ties = new ArrayList<Player>();
+		Player winner = null;
+		int highestCrownCount = winCrownCount;
+
+		for (int i = 0; i < players.length; i++) {
+			int count = players[i].getCrowns();
+
+			if (count > highestCrownCount) {
+				// New winner, scrap old ties
+				winner = players[i];
+				highestCrownCount = count;
+				ties = new ArrayList<Player>();
+			} else if (count == highestCrownCount) {
+				if (winner == null) {
+					// In case a winner was not found before
+					winner = players[i];
+				} else {
+					// Must be a tie
+					ties.add(players[i]);
+				}
+			}
+
+			System.out.println(" " + players[i].getName() + " - " + count);
+		}
+
+		// Settle tie w/ highest money count
+		if (ties.size() > 0) {
+			int largestMoney = 0;
+
+			for (Player p : ties) {
+				int money = p.getMoney() + ((firstPlayer == p) ? 10 : 0);
+
+				if (money > largestMoney) {
+					winner = p;
+					largestMoney = money;
+				}
+			}
+		}
+
+		// If there is no winner
+		if (winner == null) {
+			System.out.println("\nThere is no winner!");
+			getConfirmation();
+		} else {
+			System.out.println("\nWith " + winner.getCrowns() + " crowns and " + winner.getMoney() + " coins, " + winner.getName() + " is the winner!");
+			gameOver = true;
+		}
 	}
 
 	// Returns the name of the card
